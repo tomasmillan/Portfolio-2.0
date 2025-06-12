@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
+
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -8,7 +9,6 @@ function Navbar() {
   const closeMenu = () => {
     setIsOpen(false);
   };
-
   return (
     <nav className="bg-gray-600 shadow-md p-4 relative z-40"> {/* Increased z-index for the main nav */}
       <div className="container mx-auto flex items-center justify-between"> {/* Changed justify-around to justify-between for better logo/toggler spacing */}
