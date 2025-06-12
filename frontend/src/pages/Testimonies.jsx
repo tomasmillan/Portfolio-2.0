@@ -5,14 +5,14 @@ function Testimonies() {
     {
       id: 1,
       nombre: "Lucía Fernández",
-      rol: "Fundadora de VerdeCo",
+      rol: "Fundadora de El club del Mate",
       mensaje:
         "Trabajar con Tomás fue un placer. Captó exactamente lo que necesitábamos para nuestra tienda online y lo plasmó con mucha creatividad y profesionalismo.",
     },
     {
       id: 2,
-      nombre: "Martín Rossi",
-      rol: "CEO de Agencia Bruma",
+      nombre: "Estanislao Ballan",
+      rol: "Artista y Productor Tano de la Tierra",
       mensaje:
         "Responsable, resolutivo y con muy buen ojo para el diseño. Recomiendo a Tomás para cualquier proyecto digital que requiera impacto visual y funcionalidad.",
     },

@@ -22,13 +22,22 @@ export const getPodcasts = async () => {
   }
 };
 
-export const getPortfolio = async () => {
+export const getPortfolio = async (options = {}) => {
   try {
-    const response = await axios.get(`${API_URL}/portfolios?populate=*`);
+    let url = `${API_URL}/portfolios?populate=*`;
+
+    // Add sorting parameter if provided
+    if (options.sort) {
+      // Strapi expects sort as ?sort[0]=field:direction or ?sort=field:direction for single sort
+      // For simplicity, we'll use the direct sort string if it's simple
+      url += `&sort=${options.sort}`;
+    }
+
+    const response = await axios.get(url);
     return response.data.data;
   } catch (error) {
-    console.error("Error fetching podcasts:", error);
-    return [];
+    console.error("Error fetching portfolios:", error);
+    throw error;
   }
 };
 
@@ -71,20 +80,16 @@ export const getPodcastBySlug = async (slug) => {
 };
 export const getPortfolioBySlug = async (slug) => {
   try {
-      const response = await fetch(`http://localhost:1337/api/portfolios?filters[slug][$eq]=${slug}&populate=*`); // Cambio aquí: /api/posts
-      if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log("Data from API:", data);
-      if (data.data && data.data.length > 0) {
-          return data.data[0];
-      } else {
-          return null;
-      }
+    // This is the correct filter syntax for fetching by slug
+    const response = await axios.get(`${API_URL}/portfolios?filters[slug][$eq]=${slug}&populate=*`);
+    
+    // IMPORTANT: Return response.data.data which is the array of items
+    // If no item is found, response.data.data will be an empty array []
+    return response.data.data; 
   } catch (error) {
-      console.error("Error fetching post:", error);
-      return null;
+    console.error(`Error fetching portfolio with slug ${slug}:`, error);
+    // It's good practice to re-throw the error so the calling component can catch it
+    throw error; 
   }
 };
 

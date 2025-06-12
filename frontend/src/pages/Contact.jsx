@@ -15,16 +15,22 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:1337/api/contact", {
+      const res = await fetch("http://localhost:1337/api/contacts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          data: formData, // Strapi v4 uses "data" wrapper
+        }),
       });
 
       if (res.ok) {
         alert("Mensaje enviado con éxito ✉️");
         setFormData({ nombre: "", email: "", pais: "", mensaje: "" });
       } else {
+        const errorData = await res.json();
+        console.error("Error details:", errorData);
         alert("Hubo un error al enviar el mensaje.");
       }
     } catch (err) {
@@ -118,7 +124,7 @@ function Contact() {
               className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
               placeholder="Juan Pérez"
               value={formData.nombre}
-              onChange={handleChange || ""}
+              onChange={handleChange}
             />
           </div>
 
@@ -143,19 +149,19 @@ function Contact() {
 
           <div>
             <label
-              htmlFor="country"
+              htmlFor="pais"
               className="block text-sm font-semibold text-gray-700"
             >
               País
             </label>
             <input
               type="text"
-              id="country"
-              name="country"
-              autoComplete="country"
+              id="pais"
+              name="pais"
+              autoComplete="pais"
               className="mt-2 w-full px-4 py-2 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
               placeholder="Argentina"
-              value={formData.country || ""}
+              value={formData.pais || ""}
               onChange={handleChange}
             />
           </div>
