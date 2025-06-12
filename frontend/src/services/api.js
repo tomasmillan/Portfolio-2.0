@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:1337/api"; // Cambiar en producción
+const API_URL = import.meta.env.VITE_STRAPI_BASE_URL || 'http://localhost:1337';; // Cambiar en producción
 
 export const getPosts = async () => {
   try {
