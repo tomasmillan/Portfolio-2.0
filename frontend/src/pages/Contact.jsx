@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
+
 function Contact() {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -15,13 +17,13 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:1337/api/contacts", {
+      const res = await fetch(`${strapiBaseUrl}/api/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          data: formData, // Strapi v4 uses "data" wrapper
+          data: formData,
         }),
       });
 

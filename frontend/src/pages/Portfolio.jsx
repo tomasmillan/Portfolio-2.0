@@ -5,15 +5,15 @@ import { Link } from "react-router-dom";
 function Portfolio() {
   const [portfolio, setPortfolio] = useState([]);
   const [loading, setLoading] = useState(true); // Added loading state
-  const [error, setError] = useState(null);     // Added error state
+  const [error, setError] = useState(null); // Added error state
   // State for current sort order: default to newest first (id:desc)
-  const [sortOrder, setSortOrder] = useState('id:desc');
-  const strapiBaseUrl = "http://localhost:1337";
+  const [sortOrder, setSortOrder] = useState("id:desc");
+  const strapiBaseUrl =
+    import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
 
-  // Using useCallback to memoize fetchData to prevent unnecessary re-creations
   const fetchData = useCallback(async () => {
     setLoading(true); // Start loading
-    setError(null);   // Clear any previous errors
+    setError(null); // Clear any previous errors
     try {
       // Pass the current sortOrder to the API function
       const data = await getPortfolio({ sort: sortOrder });
@@ -39,12 +39,15 @@ function Portfolio() {
       <div className="max-w-6xl mx-auto text-center">
         <h1 className="text-4xl font-bold mb-4 text-gray-800">Portfolio</h1>
         <p className="text-lg text-gray-600 mb-8">
-          Acá están algunos de mis trabajos recientes en diseño, desarrollo y branding digital.
+          Acá están algunos de mis trabajos recientes en diseño, desarrollo y
+          branding digital.
         </p>
 
         {/* Sorting Dropdown */}
         <div className="mb-12 flex justify-center">
-          <label htmlFor="sort-select" className="sr-only">Ordenar por:</label>
+          <label htmlFor="sort-select" className="sr-only">
+            Ordenar por:
+          </label>
           <select
             id="sort-select"
             className="block w-full max-w-xs p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700"
@@ -92,16 +95,22 @@ function Portfolio() {
                       className="w-full h-44 object-cover rounded mb-3"
                     />
                   )}
-                  <h2 className="text-xl font-semibold text-gray-800 mb-2">{item.Title}</h2>
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                    {item.Title}
+                  </h2>
                   {item.description?.[0]?.children?.[0]?.text && (
                     <p className="text-gray-500 text-sm mb-2">
                       {item.description[0].children[0].text.substring(0, 70)}...
                     </p>
                   )}
                   {/* Assuming 'Publicado por' and 'publicado' are always present or handled safely */}
-                  <p className="text-gray-400 text-xs mt-3">Publicado por: Tomas Millan Lanhozo</p>
+                  <p className="text-gray-400 text-xs mt-3">
+                    Publicado por: Tomas Millan Lanhozo
+                  </p>
                   {item.publicado && (
-                    <p className="text-gray-400 text-xs">Fecha: {item.publicado}</p>
+                    <p className="text-gray-400 text-xs">
+                      Fecha: {item.publicado}
+                    </p>
                   )}
                 </Link>
               </div>

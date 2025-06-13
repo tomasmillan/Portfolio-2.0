@@ -11,7 +11,7 @@ function Home() {
   // const [latestPosts, setLatestPosts] = useState([]);
   // const [latestPodcasts, setLatestPodcasts] = useState([]);
   const [latestPortfolios, setLatestPortfolios] = useState([]);
-  const strapiBaseUrl = "http://localhost:1337";
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
 
   useEffect(() => {
     const fetchData = async () => {

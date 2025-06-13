@@ -9,7 +9,7 @@ function PortfolioDetail() {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const strapiBaseUrl = 'http://localhost:1337';
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
 
   useEffect(() => {
     const fetchPortfolioData = async () => {

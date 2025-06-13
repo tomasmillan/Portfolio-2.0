@@ -2,10 +2,10 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { getPodcasts } from "../services/api";
 import { Link } from "react-router-dom";
+const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
 
 function Podcast() {
   const [podcast, setPodcast] = useState([]);
-  const strapiBaseUrl = "http://localhost:1337";
 
   useEffect(() => {
     const fetchData = async () => {

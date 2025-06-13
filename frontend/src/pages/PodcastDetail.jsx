@@ -5,7 +5,7 @@ import { getPodcastBySlug } from '../services/api';
 function PodcastDetail() {
     const { slug } = useParams();
     const [podcast, setPodcast] = useState(null);
-    const strapiBaseUrl = 'http://localhost:1337';
+    const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
 
     useEffect(() => {
         console.log("Slug from useParams:", slug);

@@ -2,24 +2,21 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 export const About = () => {
-  // Define the path to your image.
-  // Make sure to place your photo (e.g., 'your-photo.jpg')
-  // inside the 'public/images/' folder of your React project.
-  const myPhoto = "/images/perfilcv.jpg"; // <--- CHANGE THIS TO YOUR ACTUAL IMAGE PATH
+  const myPhoto = "/images/perfilcv.jpg";
 
   return (
     <div className="bg-white py-16 px-4">
-      <div className="max-w-4xl mx-auto flex flex-col items-center"> {/* Added flex flex-col items-center for centering */}
-        <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center"> {/* Adjusted mb-4 to mb-8 for more space */}
+      <div className="max-w-4xl mx-auto flex flex-col items-center">
+        <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
           Sobre mí
         </h1>
 
         {/* Image Section */}
-        <div className="mb-8 flex justify-center"> {/* Added div for centering the image */}
+        <div className="mb-8 flex justify-center">
           <img
             src={myPhoto}
-            alt="Foto de Tomas Millan Lanhozo" // Good alt text for accessibility
-            className="w-60 h-60 rounded-full object-cover shadow-lg border-4 border-blue-500" // Styled as a circular image
+            alt="Foto de Tomas Millan Lanhozo"
+            className="w-60 h-60 rounded-full object-cover shadow-lg border-4 border-blue-500"
           />
         </div>
 
@@ -48,7 +45,7 @@ export const About = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-4 text-sm text-white mt-4"> {/* Added mt-4 for spacing */}
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-white mt-4">
           <span className="bg-gray-800 px-3 py-1 rounded-full">
             Diseño Ux/UI
           </span>
