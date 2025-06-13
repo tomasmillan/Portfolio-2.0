@@ -1,13 +1,7 @@
-// path: ./config/database.ts (o .js)
-
-// Si no tienes 'pg-connection-string' instalado, en tu terminal (en la carpeta 'blog'):
-// npm install pg-connection-string
+// path: ./config/database.ts
 import { parse } from 'pg-connection-string'; 
 
 export default ({ env }) => {
-  // Strapi intentará leer la variable de entorno 'DATABASE_URL'
-  // Cuando despliegues en Render, Render inyectará automáticamente
-  // la URL de tu base de datos en esta variable de entorno.
   const config = parse(env('DATABASE_URL') as string); 
 
   return {
@@ -19,8 +13,15 @@ export default ({ env }) => {
       user: config.user,
       password: config.password,
       ssl: {
-        rejectUnauthorized: false // Esto a menudo es necesario para que funcione con Render
+        rejectUnauthorized: false // Asegúrate de que esto siga aquí
       },
+      // ¡AÑADE ESTE BLOQUE DE 'pool'!
+      pool: {
+        min: 2, // Mínimo de conexiones en el pool
+        max: 10 // Máximo de conexiones en el pool
+      },
+      // Opcional: Si quieres un timeout explícito para adquirir conexiones del pool
+      // acquireConnectionTimeout: 60000 // 60 segundos
     },
   };
 };
