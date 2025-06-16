@@ -3,7 +3,7 @@ import { parse } from 'pg-connection-string';
 
 export default ({ env }) => {
   const config = parse(env('DATABASE_URL') as string); 
-
+console.log(config)
   return {
     connection: {
       client: 'postgres',
@@ -21,7 +21,7 @@ export default ({ env }) => {
         max: 10 // Máximo de conexiones en el pool
       },
       // Opcional: Si quieres un timeout explícito para adquirir conexiones del pool
-      // acquireConnectionTimeout: 60000 // 60 segundos
+       acquireConnectionTimeout: 60000 // 60 segundos
     },
   };
 };
