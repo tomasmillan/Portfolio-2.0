@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app/api";
+const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -17,7 +17,7 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${strapiBaseUrl}/api/contacts`, {
+      const res = await fetch(`${strapiBaseUrl}/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
