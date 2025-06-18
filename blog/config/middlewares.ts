@@ -19,14 +19,8 @@ export default [
       },
     },
   },
-  { // Este es el middleware de CORS, también necesita tu URL de Vercel
-    name: 'strapi::cors',
-    config: {
-      enabled: true,
-      headers: '*',
-      origin: ['http://localhost:5173', 'https://portfolio-2-0-tan-seven.vercel.app/'], // <--- ¡Añade tu URL de Vercel aquí!
-    },
-  },
+// Este es el middleware de CORS, también necesita tu URL de Vercel
+  'strapi::cors',
   'strapi::poweredBy',
   'strapi::query',
   'strapi::body',
