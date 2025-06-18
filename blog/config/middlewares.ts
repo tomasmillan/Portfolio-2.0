@@ -20,7 +20,17 @@ export default [
     },
   },
 // Este es el middleware de CORS, también necesita tu URL de Vercel
-  'strapi::cors',
+   {
+    name: 'strapi::cors',
+    config: {
+      enabled: true,
+      headers: '*',
+      origin: [
+        'https://portfolio-2-0-tan-seven.vercel.app', // Tu frontend en Vercel
+        'https://portfolio-20-production-96a6.up.railway.app', // Tu propio admin de Strapi en Railway
+      ],
+    },
+  },
   'strapi::poweredBy',
   'strapi::query',
   'strapi::body',
