@@ -1,2 +1,11 @@
-@import "tailwindcss";
+@import "tailwindcss"; 
 @plugin "daisyui";
+
+:root {
+  --font-sans: "Lato", sans-serif;
+  min-height: 100vh;
+  text-align: center;
+}
+body {
+  font-family: var(--font-sans, "Lato", sans-serif);
+}
