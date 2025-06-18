@@ -43,7 +43,7 @@ export const getPortfolio = async (options = {}) => {
 
 export const getPostBySlug = async (slug) => {
   try {
-      const response = await fetch(`http://localhost:1337/api/posts?filters[slug][$eq]=${slug}&populate=*`); // Cambio aquí: /api/posts
+      const response = await fetch(`https://portfolio-20-production-96a6.up.railway.app/api/posts?filters[slug][$eq]=${slug}&populate=*`); // Cambio aquí: /api/posts
       if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -62,7 +62,7 @@ export const getPostBySlug = async (slug) => {
 
 export const getPodcastBySlug = async (slug) => {
   try {
-      const response = await fetch(`http://localhost:1337/api/podcasts?filters[slug][$eq]=${slug}&populate=*`);
+      const response = await fetch(`https://portfolio-20-production-96a6.up.railway.app/api/podcasts?filters[slug][$eq]=${slug}&populate=*`);
       if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -95,7 +95,7 @@ export const getPortfolioBySlug = async (slug) => {
 
 export const getLatestPosts = async (limit = 3) => {
   try {
-      const response = await fetch(`http://localhost:1337/api/posts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`);
+      const response = await fetch(`https://portfolio-20-production-96a6.up.railway.app/api/posts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`);
       if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -109,7 +109,7 @@ export const getLatestPosts = async (limit = 3) => {
 
 export const getLatestPodcasts = async (limit = 3) => {
   try {
-      const response = await fetch(`http://localhost:1337/api/podcasts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`);
+      const response = await fetch(`https://portfolio-20-production-96a6.up.railway.app/api/podcasts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`);
       if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -123,7 +123,7 @@ export const getLatestPodcasts = async (limit = 3) => {
 
 export const getLatestPortfolios = async (limit = 4) => {
   try {
-      const response = await fetch(`http://localhost:1337/api/portfolios?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`);
+      const response = await fetch(`https://portfolio-20-production-96a6.up.railway.app/api/portfolios?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`);
       if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
       }

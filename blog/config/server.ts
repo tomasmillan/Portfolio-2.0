@@ -18,5 +18,5 @@ export default ({ env }) => ({
   // Define la URL pública donde Strapi será accesible.
   // Esto es VITAL cuando usas Nginx como proxy inverso,
   // ya que le dice a Strapi cómo generar URLs correctas (ej. para imágenes, APIs).
-  url: env('PUBLIC_STRAPI_URL', 'http://localhost:1337'), // Valor por defecto para desarrollo
+  url: env('PUBLIC_STRAPI_URL', 'https://portfolio-20-production-96a6.up.railway.app'), // Valor por defecto para desarrollo
 });
