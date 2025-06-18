@@ -11,7 +11,7 @@ function Home() {
   // const [latestPosts, setLatestPosts] = useState([]);
   // const [latestPodcasts, setLatestPodcasts] = useState([]);
   const [latestPortfolios, setLatestPortfolios] = useState([]);
-  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.apps";
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway./api";
 
   useEffect(() => {
     const fetchData = async () => {

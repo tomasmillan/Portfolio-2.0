@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_STRAPI_BASE_URL || 'https://portfolio-20-production-96a6.up.railway.app';; // Cambiar en producción
+const API_URL = import.meta.env.VITE_STRAPI_BASE_URL || 'https://portfolio-20-production-96a6.up.railway.app/api'; // Cambiar en producción
 
 export const getPosts = async () => {
   try {

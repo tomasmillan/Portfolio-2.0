@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { getPodcasts } from "../services/api";
 import { Link } from "react-router-dom";
-const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.apps";
+const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.apps/api";
 
 function Podcast() {
   const [podcast, setPodcast] = useState([]);

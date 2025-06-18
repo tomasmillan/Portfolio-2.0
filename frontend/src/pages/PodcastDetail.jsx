@@ -5,7 +5,7 @@ import { getPodcastBySlug } from '../services/api';
 function PodcastDetail() {
     const { slug } = useParams();
     const [podcast, setPodcast] = useState(null);
-    const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
+    const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app/api";
 
     useEffect(() => {
         console.log("Slug from useParams:", slug);
