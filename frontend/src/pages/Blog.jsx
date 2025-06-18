@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 
 function Blog() {
   const [posts, setPosts] = useState([]);
-  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
 
   useEffect(() => {
     const fetchData = async () => {

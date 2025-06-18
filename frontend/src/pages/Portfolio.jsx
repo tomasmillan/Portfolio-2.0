@@ -9,7 +9,7 @@ function Portfolio() {
   // State for current sort order: default to newest first (id:desc)
   const [sortOrder, setSortOrder] = useState("id:desc");
   const strapiBaseUrl =
-    import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
+    import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
 
   const fetchData = useCallback(async () => {
     setLoading(true); // Start loading

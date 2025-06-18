@@ -5,7 +5,7 @@ import { getPostBySlug } from '../services/api';
 function PostDetails() {
     const { slug } = useParams(); // Sin cambios aquí
     const [post, setPost] = useState(null);
-    const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
+    const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
 
     useEffect(() => {
       console.log("Slug from useParams:", slug); // Agrega esta línea

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "http://localhost:1337";
+const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
 
 function Contact() {
   const [formData, setFormData] = useState({
