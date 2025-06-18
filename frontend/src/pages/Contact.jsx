@@ -17,7 +17,7 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${strapiBaseUrl}/contacts`, {
+      const res = await fetch(`${strapiBaseUrl}/api/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
