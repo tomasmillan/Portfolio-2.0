@@ -10,7 +10,7 @@ function Portfolio() {
   const [sortOrder, setSortOrder] = useState("id:desc");
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
-
+console.log(strapiBaseUrl)
   const fetchData = useCallback(async () => {
     setLoading(true); // Start loading
     setError(null); // Clear any previous errors

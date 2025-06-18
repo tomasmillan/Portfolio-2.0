@@ -10,8 +10,8 @@ export default [
         useDefaults: true,
         directives: {
           // Añade tu URL de Vercel aquí para permitir iframes (PDFs, etc.)
-          'frame-ancestors': ["'self'", 'http://localhost:5173', 'https://portfolio-2-0-tan-seven.vercel.app/'], 
-          'frame-src': ["'self'", 'http://localhost:5173', 'data:', 'https://portfolio-2-0-tan-seven.vercel.app/'], 
+          'frame-ancestors': ["'self'", 'https://portfolio-20-production-96a6.up.railway.app/', 'https://portfolio-2-0-tan-seven.vercel.app/'], 
+          'frame-src': ["'self'", 'https://portfolio-20-production-96a6.up.railway.app/', 'data:', 'https://portfolio-2-0-tan-seven.vercel.app/'], 
           'img-src': ["'self'", 'data:', 'blob:', 'https:', 'http:'], 
           'script-src': ["'self'", 'https:', 'http:', "'unsafe-inline'", "'unsafe-eval'"],
           'connect-src': ["'self'", "https:", "http:"],
