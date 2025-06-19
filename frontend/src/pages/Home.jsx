@@ -73,14 +73,22 @@ function Home() {
                   className="bg-white rounded-lg shadow h-full flex flex-col overflow-hidden transform transition duration-300 hover:scale-105"
                 >
                   {/* Acceso corregido a coverImage y su URL dentro de attributes */}
-                  {portfolio.coverImage?.[0]?.url && (
-                    console.log("Image URL from Strapi:", portfolio.coverImage[0].url),
-                    <img
-                      src={`${strapiBaseUrl}${portfolio.coverImage[0].url}`}
-                      alt={`Portada de ${portfolio.Title}`} // Acceso corregido a Title
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  )}
+                  {portfolio.coverImage &&
+                    portfolio.coverImage[0] &&
+                    (() => {
+                      const imageUrl =
+                        portfolio.coverImage[0].url.startsWith("http") ||
+                        portfolio.coverImage[0].url.startsWith("https")
+                          ? portfolio.coverImage[0].url
+                          : `${strapiBaseUrl}${portfolio.coverImage[0].url}`;
+                      return (
+                        <img
+                          src={imageUrl}
+                          alt={portfolio.Title}
+                          className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                      );
+                    })()}
                   <div className="p-4 flex-grow flex flex-col">
                     <h3 className="text-xl font-semibold mb-2">
                       {portfolio.Title} {/* Acceso corregido a Title */}
