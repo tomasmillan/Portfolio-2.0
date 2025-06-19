@@ -23,17 +23,16 @@ function PortfolioDetail() {
         const portfolioData = await getPortfolioBySlug(slug);
 
         if (portfolioData) {
-          // Si getPortfolioBySlug devuelve null o undefined, entra al else
           setPortfolio(portfolioData);
           console.log(
-            "Portfolio data loaded successfully:",
+            "Portfolio data loaded successfully (Title):",
             portfolioData.Title
-          );
-          console.log("Embed Code from API:", portfolioData.embedCode);
+          ); // Verificar el título
+          console.log("Embed Code from API:", portfolioData.embedCode); // Verificar el embedCode
         } else {
           setPortfolio(null);
           setError(`No se encontró ningún proyecto con el slug: ${slug}`);
-          console.warn(`No portfolio found with slug: ${slug}`);
+          console.warn(`No portfolio found with slug: ${slug}`); //
         }
       } catch (err) {
         console.error("Error al obtener detalles del portfolio:", err);
@@ -52,7 +51,6 @@ function PortfolioDetail() {
       <div className="bg-gray-100 min-h-screen py-16 px-4 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg text-gray-700 mb-4">Cargando proyecto...</p>
-          {/* Usando un spinner de Tailwind CSS si tienes daisyUI o similar, o un simple texto */}
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
         </div>
       </div>
@@ -189,6 +187,16 @@ function PortfolioDetail() {
             );
           }
           return null;
+        case "code": // Added to handle potential code blocks from Strapi
+            return (
+                <pre key={index} className="bg-gray-800 text-white p-4 rounded-md overflow-x-auto my-4">
+                    <code>
+                        {block.children.map((child) => child.text).join('')}
+                    </code>
+                </pre>
+            );
+        default:
+          return null;
       }
     });
   };
@@ -246,8 +254,13 @@ function PortfolioDetail() {
             {portfolio.mediaFiles.map((file, index) => (
               <div key={index} className="mb-4">
                 {file.ext === ".pdf" ? (
+                  // Lógica para el PDF también para URLs completas
                   <iframe
-                    src={`${strapiBaseUrl}${file.url}`}
+                    src={
+                        file.url.startsWith("http") || file.url.startsWith("https")
+                        ? file.url
+                        : `${strapiBaseUrl}${file.url}`
+                    }
                     width="100%"
                     height="600px"
                     title={`PDF de ${portfolio.Title}`}
@@ -255,7 +268,11 @@ function PortfolioDetail() {
                   />
                 ) : (
                   <a
-                    href={`${strapiBaseUrl}${file.url}`}
+                    href={
+                        file.url.startsWith("http") || file.url.startsWith("https")
+                        ? file.url
+                        : `${strapiBaseUrl}${file.url}`
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out"

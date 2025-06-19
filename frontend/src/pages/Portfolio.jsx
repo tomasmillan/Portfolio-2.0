@@ -1,37 +1,40 @@
-import React, { useEffect, useState, useCallback } from "react"; // Added useCallback
-import { getPortfolio } from "../services/api";
+import React, { useEffect, useState, useCallback } from "react";
+import { getPortfolio } from "../services/api"; // Asumo que `getPortfolio` ahora acepta un objeto de opciones para el ordenamiento
 import { Link } from "react-router-dom";
 
 function Portfolio() {
   const [portfolio, setPortfolio] = useState([]);
-  const [loading, setLoading] = useState(true); // Added loading state
-  const [error, setError] = useState(null); // Added error state
-  // State for current sort order: default to newest first (id:desc)
-  const [sortOrder, setSortOrder] = useState("id:desc");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // State for current sort order: default to newest first (createdAt:desc is usually better than id:desc for dates)
+  const [sortOrder, setSortOrder] = useState("createdAt:desc"); // Cambiado a 'createdAt:desc' para un ordenamiento más lógico
   const strapiBaseUrl =
-    import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
-console.log(strapiBaseUrl)
+    import.meta.env.VITE_STRAPI_API_URL ||
+    "https://portfolio-20-production-96a6.up.railway.app";
+
+  console.log("Strapi Base URL:", strapiBaseUrl); // Console log para verificar la URL base
+
   const fetchData = useCallback(async () => {
-    setLoading(true); // Start loading
-    setError(null); // Clear any previous errors
+    setLoading(true);
+    setError(null);
     try {
-      // Pass the current sortOrder to the API function
+      // Pasamos el objeto de opciones para el ordenamiento a la función de la API
       const data = await getPortfolio({ sort: sortOrder });
       setPortfolio(data);
     } catch (err) {
       console.error("Error fetching portfolio:", err);
       setError("Error al cargar los proyectos. Por favor, inténtalo de nuevo.");
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
-  }, [sortOrder]); // Re-run fetchData only if sortOrder changes
+  }, [sortOrder]); // Re-ejecuta fetchData solo si sortOrder cambia
 
   useEffect(() => {
-    fetchData(); // Initial fetch when component mounts or sortOrder changes
-  }, [fetchData]); // Dependency on fetchData (which depends on sortOrder)
+    fetchData(); // Obtención inicial de datos cuando el componente se monta o si fetchData cambia
+  }, [fetchData]); // Dependencia en fetchData (que a su vez depende de sortOrder)
 
   const handleSortChange = (event) => {
-    setSortOrder(event.target.value); // Update sortOrder state, which triggers fetchData via useEffect
+    setSortOrder(event.target.value); // Actualiza el estado de sortOrder, lo que dispara fetchData a través de useEffect
   };
 
   return (
@@ -54,8 +57,9 @@ console.log(strapiBaseUrl)
             value={sortOrder}
             onChange={handleSortChange}
           >
-            <option value="id:desc">Más Recientes (por ID)</option>
-            <option value="id:asc">Más Antiguos (por ID)</option>
+            {/* Opciones de ordenamiento: 'createdAt' es más preciso para "más recientes" */}
+            <option value="createdAt:desc">Más Recientes</option>
+            <option value="createdAt:asc">Más Antiguos</option>
             <option value="Title:asc">Título (A-Z)</option>
             <option value="Title:desc">Título (Z-A)</option>
           </select>
@@ -63,6 +67,7 @@ console.log(strapiBaseUrl)
 
         {loading && (
           <div className="text-center py-8">
+            {/* Puedes usar un spinner de DaisyUI o Tailwind CSS */}
             <span className="loading loading-spinner loading-lg text-gray-500"></span>
             <p className="text-gray-600 mt-2">Cargando proyectos...</p>
           </div>
@@ -89,8 +94,14 @@ console.log(strapiBaseUrl)
               >
                 <Link to={`/portfolio/${item.slug}`} className="block">
                   {item.coverImage && item.coverImage[0] && (
+                    // Lógica para construir la URL de la imagen
                     <img
-                      src={`${strapiBaseUrl}${item.coverImage[0].url}`}
+                      src={
+                        item.coverImage[0].url.startsWith("http") ||
+                        item.coverImage[0].url.startsWith("https")
+                          ? item.coverImage[0].url // Si ya es una URL completa (de Cloudinary)
+                          : `${strapiBaseUrl}${item.coverImage[0].url}` // Si es una URL relativa (de Strapi local)
+                      }
                       alt={`Portada de ${item.Title}`}
                       className="w-full h-44 object-cover rounded mb-3"
                     />
@@ -100,10 +111,10 @@ console.log(strapiBaseUrl)
                   </h2>
                   {item.description?.[0]?.children?.[0]?.text && (
                     <p className="text-gray-500 text-sm mb-2">
+                      {/* Mostrar una descripción corta, asegúrate de manejar rich text si es necesario */}
                       {item.description[0].children[0].text.substring(0, 70)}...
                     </p>
                   )}
-                  {/* Assuming 'Publicado por' and 'publicado' are always present or handled safely */}
                   <p className="text-gray-400 text-xs mt-3">
                     Publicado por: Tomas Millan Lanhozo
                   </p>
