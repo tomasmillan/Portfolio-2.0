@@ -1,5 +1,4 @@
 // src/components/PortfolioDetail.jsx
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getPortfolioBySlug } from "../services/api";
@@ -9,6 +8,8 @@ function PortfolioDetail() {
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Asegúrate de que esta URL de base de Strapi sea la correcta
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_API_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
@@ -19,23 +20,23 @@ function PortfolioDetail() {
       setError(null);
 
       try {
-        // getPortfolioBySlug ya debería devolver el objeto plano con attributes
-        const portfolioData = await getPortfolioBySlug(slug);
+        const portfolioData = await getPortfolioBySlug(slug); // Ya debería estar aplanado aquí
 
         if (portfolioData) {
           setPortfolio(portfolioData);
-          console.log(
-            "Portfolio data loaded successfully (Title):",
-            portfolioData.Title
-          ); // Verificar el título
-          console.log("Embed Code from API:", portfolioData.embedCode); // Verificar el embedCode
+          // ¡ESTOS CONSOLE.LOGS SON CLAVE!
+          console.log("--- PortfolioDetail Component Debug ---");
+          console.log("Portfolio object received:", portfolioData); // Muestra el objeto completo
+          console.log("Title property:", portfolioData.Title);
+          console.log("EmbedCode property:", portfolioData.embedCode);
+          console.log("CoverImage URL:", portfolioData.coverImage?.[0]?.url); // Verifica si coverImage existe
         } else {
           setPortfolio(null);
           setError(`No se encontró ningún proyecto con el slug: ${slug}`);
-          console.warn(`No portfolio found with slug: ${slug}`); //
+          console.warn(`No portfolio found with slug: ${slug}`);
         }
       } catch (err) {
-        console.error("Error al obtener detalles del portfolio:", err);
+        console.error("Error al obtener detalles del portfolio en PortfolioDetail:", err);
         setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
         setPortfolio(null);
       } finally {
@@ -47,189 +48,44 @@ function PortfolioDetail() {
   }, [slug]);
 
   if (loading) {
-    return (
-      <div className="bg-gray-100 min-h-screen py-16 px-4 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-gray-700 mb-4">Cargando proyecto...</p>
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
-      </div>
-    );
+    return <div className="text-center p-4">Cargando proyecto...</div>;
   }
 
   if (error) {
-    return (
-      <div className="bg-gray-100 min-h-screen py-16 px-4 flex items-center justify-center">
-        <div className="text-center p-6 bg-white rounded-xl shadow-lg">
-          <p className="text-xl text-red-600 font-semibold mb-4">{error}</p>
-          <p className="text-gray-600">
-            Por favor, verifica la URL o inténtalo más tarde.
-          </p>
-        </div>
-      </div>
-    );
+    return <div className="text-red-500 text-center p-4">Error: {error}</div>;
   }
 
   if (!portfolio) {
-    return (
-      <div className="bg-gray-100 min-h-screen py-16 px-4 flex items-center justify-center">
-        <div className="text-center p-6 bg-white rounded-xl shadow-lg">
-          <p className="text-xl text-gray-700 font-semibold">
-            Proyecto no disponible.
-          </p>
-          <p className="text-gray-600 mt-2">
-            No se pudo cargar la información del proyecto.
-          </p>
-        </div>
-      </div>
-    );
+    return <div className="text-gray-700 text-center p-4">Proyecto no disponible.</div>;
   }
 
-  // --- renderStrapiDescription FUNCTION (se mantiene igual, ya está bien) ---
-  const renderStrapiDescription = (descriptionContent) => {
-    if (!descriptionContent || !Array.isArray(descriptionContent)) {
-      return null;
-    }
+  // Lógica para obtener la URL de la coverImage
+  const coverImageUrl = portfolio.coverImage && portfolio.coverImage[0]
+    ? (portfolio.coverImage[0].url.startsWith("http") || portfolio.coverImage[0].url.startsWith("https")
+      ? portfolio.coverImage[0].url
+      : `${strapiBaseUrl}${portfolio.coverImage[0].url}`)
+    : null;
 
-    const renderTextChildren = (children) => {
-      return children.map((child, childIndex) => {
-        let text = child.text;
-        if (child.bold) text = <strong key={childIndex}>{text}</strong>;
-        if (child.italic) text = <em key={childIndex}>{text}</em>;
-        return text;
-      });
-    };
-
-    return descriptionContent.map((block, index) => {
-      switch (block.type) {
-        case "paragraph":
-          return (
-            <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-              {block.children.map((child, childIndex) => {
-                if (child.type === "link") {
-                  if (child.url && child.children) {
-                    return (
-                      <a
-                        key={childIndex}
-                        href={child.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        {renderTextChildren(child.children)}
-                      </a>
-                    );
-                  }
-                  return null;
-                }
-                return renderTextChildren([child]);
-              })}
-            </p>
-          );
-        case "heading":
-          if (block.level === 1)
-            return (
-              <h1 key={index} className="text-3xl font-bold mb-4 text-gray-800">
-                {renderTextChildren(block.children)}
-              </h1>
-            );
-          if (block.level === 2)
-            return (
-              <h2 key={index} className="text-2xl font-bold mb-3 text-gray-800">
-                {renderTextChildren(block.children)}
-              </h2>
-            );
-          if (block.level === 3)
-            return (
-              <h3 key={index} className="text-xl font-bold mb-2 text-gray-800">
-                {renderTextChildren(block.children)}
-              </h3>
-            );
-          return null;
-        case "list": {
-          const ListTag = block.format === "ordered" ? "ol" : "ul";
-          return (
-            <ListTag
-              key={index}
-              className={`mb-4 pl-5 ${
-                block.format === "ordered" ? "list-decimal" : "list-disc"
-              }`}
-            >
-              {block.children.map((listItem, liIndex) => (
-                <li key={liIndex} className="mb-1 text-gray-700">
-                  {renderTextChildren(listItem.children)}
-                </li>
-              ))}
-            </ListTag>
-          );
-        }
-        case "image":
-          if (block.image?.url) {
-            const blockImageUrl =
-              block.image.url.startsWith("http") ||
-              block.image.url.startsWith("https")
-                ? block.image.url
-                : `${strapiBaseUrl}${block.image.url}`;
-
-            return (
-              <div key={index} className="my-6">
-                <img
-                  src={blockImageUrl}
-                  alt={block.image.alternativeText || "Descripción de imagen"}
-                  className="w-full h-auto rounded-lg shadow-md"
-                />
-                {block.image.caption && (
-                  <p className="text-center text-gray-500 text-sm mt-2">
-                    {block.image.caption}
-                  </p>
-                )}
-              </div>
-            );
-          }
-          return null;
-        case "code": // Added to handle potential code blocks from Strapi
-            return (
-                <pre key={index} className="bg-gray-800 text-white p-4 rounded-md overflow-x-auto my-4">
-                    <code>
-                        {block.children.map((child) => child.text).join('')}
-                    </code>
-                </pre>
-            );
-        default:
-          return null;
-      }
-    });
-  };
 
   return (
     <div className="bg-gray-100 min-h-screen py-16 px-4">
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 text-gray-800 text-center">
-          {portfolio.Title}
+          {portfolio.Title || "Título no disponible"}
         </h1>
 
-        {/* Acceso directo a coverImage y su URL */}
-        {portfolio.coverImage &&
-          portfolio.coverImage[0] &&
-          (() => {
-            const imageUrl =
-              portfolio.coverImage[0].url.startsWith("http") ||
-              portfolio.coverImage[0].url.startsWith("https")
-                ? portfolio.coverImage[0].url
-                : `${strapiBaseUrl}${portfolio.coverImage[0].url}`;
+        {coverImageUrl && (
+          <img
+            src={coverImageUrl}
+            alt={`Portada de ${portfolio.Title}`}
+            className="w-full h-80 md:h-96 object-cover rounded-lg mb-8 shadow-md"
+          />
+        )}
 
-            return (
-              <img
-                src={imageUrl}
-                alt={`Portada de ${portfolio.Title}`}
-                className="w-full h-80 md:h-96 object-cover rounded-lg mb-8 shadow-md"
-              />
-            );
-          })()}
-
-        {/* Render the rich text description */}
-        {portfolio.description &&
-          renderStrapiDescription(portfolio.description)}
+        {/* Solo para depuración - Mostrar directamente el objeto portfolio */}
+        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+          {JSON.stringify(portfolio, null, 2)}
+        </pre>
 
         {/* SECTION FOR EMBED CODE */}
         {portfolio.embedCode && portfolio.embedCode.trim() !== "" && (
@@ -254,7 +110,6 @@ function PortfolioDetail() {
             {portfolio.mediaFiles.map((file, index) => (
               <div key={index} className="mb-4">
                 {file.ext === ".pdf" ? (
-                  // Lógica para el PDF también para URLs completas
                   <iframe
                     src={
                         file.url.startsWith("http") || file.url.startsWith("https")
@@ -284,6 +139,9 @@ function PortfolioDetail() {
             ))}
           </div>
         )}
+
+        {/* Render description if needed - temporarily removed to simplify */}
+        {/* {portfolio.description && renderStrapiDescription(portfolio.description)} */}
 
         <div className="text-right mt-10 pt-6 border-t border-gray-200 text-gray-500 text-sm">
           <p>Publicado por: Tomas Millan Lanhozo</p>
