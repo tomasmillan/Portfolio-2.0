@@ -1,30 +1,20 @@
 // Home.jsx
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  // getLatestPosts,
-  // getLatestPodcasts,
-  getLatestPortfolios,
-} from "../services/api";
+import { getLatestPortfolios } from "../services/api";
 
 function Home() {
-  // const [latestPosts, setLatestPosts] = useState([]);
-  // const [latestPodcasts, setLatestPodcasts] = useState([]);
   const [latestPortfolios, setLatestPortfolios] = useState([]);
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_API_URL ||
-    "https://portfolio-20-production-96a6.up.railway.app";
+    "https://portfolio-20-production-96a6.up.railway.app"; // Asegurado que no tiene el punto extra
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // const posts = await getLatestPosts();
-        // const podcasts = await getLatestPodcasts();
         const portfolios = await getLatestPortfolios();
-
-        // setLatestPosts(posts);
-        // setLatestPodcasts(podcasts);
         setLatestPortfolios(portfolios);
+        console.log("Datos de portfolios recibidos y procesados:", portfolios);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -66,100 +56,42 @@ function Home() {
       <h1 className="text-3xl font-bold m-4 text-center ">
         Bienvenido a mi sitio
       </h1>
-      {/* <section className="mb-8 text-center">
-        <h2 className="text-2xl font-semibold mb-2">Últimos Posts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {latestPosts.map((post) => (
-            <div key={post.id} className="bg-gray-100 p-4 shadow-md rounded">
-              <Link to={`/blog/${post.slug}`}>
-                {post.coverImage && ( // Modificación aquí
-                  <img
-                    src={`${strapiBaseUrl}${post.coverImage.url}`} // Modificación aquí
-                    alt={`Portada de ${post.Title}`}
-                    className="w-full h-32 object-cover mb-2 rounded"
-                  />
-                )}
-                <h2 className="text-xl font-semibold">{post.Title}</h2>
-                {post.content && <p>{post.content.substring(0, 50)}...</p>}
-              </Link>
-            </div>
-          ))}
-        </div>
-        <Link to="/blog" className="text-blue-500 mt-4 block hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
-          Ver todos los posts
-        </Link>
-      </section>
-
-      <section className="mb-8 text-center">
-        <h2 className="text-2xl font-semibold mb-2">Últimos Podcasts</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {latestPodcasts.map((podcast) => (
-            <div key={podcast.id} className="bg-white p-4 shadow-md rounded">
-              <Link to={`/podcast/${podcast.slug}`}>
-                {podcast.coverImage && podcast.coverImage[0] && (
-                  <img
-                    src={`${strapiBaseUrl}${podcast.coverImage[0].url}`}
-                    alt={`Portada de ${podcast.title}`}
-                    className="w-full h-32 object-cover mb-2 rounded"
-                  />
-                )}
-                <h2 className="text-xl font-semibold">{podcast.title}</h2>
-                {podcast.description &&
-                  podcast.description[0] &&
-                  podcast.description[0].children &&
-                  podcast.description[0].children[0] && (
-                    <p>
-                      {podcast.description[0].children[0].text.substring(0, 50)}
-                      ...
-                    </p>
-                  )}
-              </Link>
-            </div>
-          ))}
-        </div>
-        <Link to="/podcast" className="text-blue-500 mt-4 block hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800">
-          Ver todos los podcasts
-        </Link>
-      </section> */}
 
       <section className="mb-8 text-center">
         <h2 className="text-2xl font-semibold m-4">Últimos Proyectos</h2>
 
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-wrap -mx-2">
-            {" "}
-            {/* Added negative margins for spacing */}
             {latestPortfolios.map((portfolio) => (
               <div
                 key={portfolio.id}
-                className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 p-2" // Adjusted for 4 columns on large screens, added padding
+                className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 p-2"
               >
                 <Link
-                  to={`/portfolio/${portfolio.attributes.slug}`}
-                  className="bg-white rounded-lg shadow h-full flex flex-col overflow-hidden transform transition duration-300 hover:scale-105" // Added hover effect
+                  // Acceso corregido a slug dentro de attributes
+                  to={`/portfolio/${portfolio.slug}`}
+                  className="bg-white rounded-lg shadow h-full flex flex-col overflow-hidden transform transition duration-300 hover:scale-105"
                 >
-                  {portfolio.attributes.coverImage?.[0]?.url && (
+                  {/* Acceso corregido a coverImage y su URL dentro de attributes */}
+                  {portfolio.coverImage?.[0]?.url && (
                     <img
-                      src={`<span class="math-inline">${strapiBaseUrl}</span>{portfolio.attributes.coverImage[0].url}`} // Acceder a attributes.coverImage
-                      alt={`Portada de ${portfolio.attributes.Title}`} // Acceder a attributes.Title
+                      src={`${strapiBaseUrl}${portfolio.coverImage[0].url}`}
+                      alt={`Portada de ${portfolio.Title}`} // Acceso corregido a Title
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                   )}
                   <div className="p-4 flex-grow flex flex-col">
-                    {" "}
-                    {/* Added flex-grow for consistent height */}
                     <h3 className="text-xl font-semibold mb-2">
-                      {portfolio.attributes.Title}
+                      {portfolio.Title} {/* Acceso corregido a Title */}
                     </h3>
-                    {portfolio.attributes.description?.[0]?.children?.[0]?.text && (
+                    {/* Acceso corregido a description y su texto dentro de attributes */}
+                    {portfolio.description?.[0]?.children?.[0]?.text && (
                       <p className="text-gray-600 text-sm flex-grow">
-                        {" "}
-                        {/* Added flex-grow */}
-                        {portfolio.attributes.description[0].children[0].text.substring(
+                        {portfolio.description[0].children[0].text.substring(
                           0,
                           100
                         )}
-                        ... {/* Increased substring length */}
+                        ...
                       </p>
                     )}
                   </div>
@@ -171,7 +103,7 @@ function Home() {
 
         <Link
           to="/portfolio"
-          className="inline-block mt-6 bg-blue-600 text-white hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 transition duration-300" // Added transition
+          className="inline-block mt-6 bg-blue-600 text-white hover:bg-blue-700 font-medium rounded-lg text-sm px-5 py-2.5 transition duration-300"
         >
           Ver todos los proyectos
         </Link>
