@@ -74,6 +74,7 @@ function Home() {
                 >
                   {/* Acceso corregido a coverImage y su URL dentro de attributes */}
                   {portfolio.coverImage?.[0]?.url && (
+                    console.log("Image URL from Strapi:", portfolio.coverImage[0].url),
                     <img
                       src={`${strapiBaseUrl}${portfolio.coverImage[0].url}`}
                       alt={`Portada de ${portfolio.Title}`} // Acceso corregido a Title

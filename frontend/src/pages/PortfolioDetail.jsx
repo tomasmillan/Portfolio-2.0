@@ -162,6 +162,7 @@ function PortfolioDetail() {
 
         {/* Acceso directo a coverImage y su URL */}
         {portfolio.coverImage && portfolio.coverImage[0] && (
+           console.log("Image URL from Strapi:", portfolio.coverImage[0].url),
           <img
             src={`${strapiBaseUrl}${portfolio.coverImage[0].url}`}
             alt={`Portada de ${portfolio.Title}`}
