@@ -91,7 +91,9 @@ export const getPortfolioBySlug = async (slug) => {
     );
     if (response.data.data && response.data.data.length > 0) {
       const item = response.data.data[0];
+      console.log("Data from API:", item);
       return {
+        //deployed: item.attributes.deployed,
         id: item.id,
         ...item.attributes,
       };
