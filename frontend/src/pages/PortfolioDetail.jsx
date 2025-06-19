@@ -17,12 +17,13 @@ function PortfolioDetail() {
       setError(null);
 
       try {
-        const responseData = await getPortfolioBySlug(slug); 
-        
-        if (responseData && Array.isArray(responseData) && responseData.length > 0) {
-          setPortfolio(responseData[0]);
-          console.log("Portfolio data loaded successfully:", responseData[0].Title);
-          console.log("Embed Code from API:", responseData[0].embedCode); 
+        // getPortfolioBySlug ya debería devolver el objeto plano con attributes
+        const portfolioData = await getPortfolioBySlug(slug); 
+
+        if (portfolioData) { // Si getPortfolioBySlug devuelve null o undefined, entra al else
+          setPortfolio(portfolioData);
+          console.log("Portfolio data loaded successfully:", portfolioData.Title);
+          console.log("Embed Code from API:", portfolioData.embedCode); 
         } else {
           setPortfolio(null);
           setError(`No se encontró ningún proyecto con el slug: ${slug}`);
@@ -46,7 +47,8 @@ function PortfolioDetail() {
       <div className="bg-gray-100 min-h-screen py-16 px-4 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg text-gray-700 mb-4">Cargando proyecto...</p>
-          <span className="loading loading-ring loading-lg text-gray-500"></span>
+          {/* Usando un spinner de Tailwind CSS si tienes daisyUI o similar, o un simple texto */}
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
         </div>
       </div>
     );
@@ -74,20 +76,17 @@ function PortfolioDetail() {
       );
   }
 
-  // --- MODIFIED renderStrapiDescription FUNCTION ---
+  // --- renderStrapiDescription FUNCTION (se mantiene igual, ya está bien) ---
   const renderStrapiDescription = (descriptionContent) => {
     if (!descriptionContent || !Array.isArray(descriptionContent)) {
       return null;
     }
 
-    // Helper function to render text children with formatting
     const renderTextChildren = (children) => {
       return children.map((child, childIndex) => {
         let text = child.text;
-        // Apply inline formatting (bold, italic, etc.)
         if (child.bold) text = <strong key={childIndex}>{text}</strong>;
         if (child.italic) text = <em key={childIndex}>{text}</em>;
-        // You can add more formats here if needed (e.g., child.underline, child.strikethrough, child.code)
         return text;
       });
     };
@@ -98,9 +97,7 @@ function PortfolioDetail() {
           return (
             <p key={index} className="mb-4 text-gray-700 leading-relaxed">
               {block.children.map((child, childIndex) => {
-                // If it's a link node
                 if (child.type === 'link') {
-                  // Ensure there's a URL and children to render the link text
                   if (child.url && child.children) {
                     return (
                       <a 
@@ -108,25 +105,23 @@ function PortfolioDetail() {
                         href={child.url} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-blue-600 hover:underline" // Basic Tailwind styling for links
+                        className="text-blue-600 hover:underline"
                       >
                         {renderTextChildren(child.children)}
                       </a>
                     );
                   }
-                  return null; // Or handle as plain text if no URL/children
+                  return null;
                 }
-                // For regular text children within a paragraph
-                return renderTextChildren([child]); // Pass child in an array
+                return renderTextChildren([child]);
               })}
             </p>
           );
-        // Add more block types as needed (headings, lists, images)
         case 'heading':
             if (block.level === 1) return <h1 key={index} className="text-3xl font-bold mb-4 text-gray-800">{renderTextChildren(block.children)}</h1>;
             if (block.level === 2) return <h2 key={index} className="text-2xl font-bold mb-3 text-gray-800">{renderTextChildren(block.children)}</h2>;
             if (block.level === 3) return <h3 key={index} className="text-xl font-bold mb-2 text-gray-800">{renderTextChildren(block.children)}</h3>;
-            return null; // Fallback for other heading levels
+            return null;
         case 'list':
             { const ListTag = block.format === 'ordered' ? 'ol' : 'ul';
             return (
@@ -139,7 +134,7 @@ function PortfolioDetail() {
                 </ListTag>
             ); }
         case 'image':
-            if (block.image?.url) { // Check if image data exists
+            if (block.image?.url) {
                 return (
                     <div key={index} className="my-6">
                         <img 
@@ -154,17 +149,18 @@ function PortfolioDetail() {
             return null;
 
         default:
-          return null; // Render nothing for unknown block types
+          return null;
       }
     });
   };
-  // --- END MODIFIED renderStrapiDescription FUNCTION ---
+  // --- END renderStrapiDescription FUNCTION ---
 
   return (
     <div className="bg-gray-100 min-h-screen py-16 px-4">
       <div className="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl md:text-4xl font-bold mb-6 text-gray-800 text-center">{portfolio.Title}</h1>
 
+        {/* Acceso directo a coverImage y su URL */}
         {portfolio.coverImage && portfolio.coverImage[0] && (
           <img
             src={`${strapiBaseUrl}${portfolio.coverImage[0].url}`}
