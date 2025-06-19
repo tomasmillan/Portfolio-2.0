@@ -9,43 +9,53 @@ function PortfolioDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Asegúrate de que esta URL de base de Strapi sea la correcta
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_API_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
 
   useEffect(() => {
+    let isMounted = true; // Flag para manejar componentes desmontados
+
     const fetchPortfolioData = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const portfolioData = await getPortfolioBySlug(slug); // Ya debería estar aplanado aquí
+        const portfolioData = await getPortfolioBySlug(slug);
 
-        if (portfolioData) {
-          setPortfolio(portfolioData);
-          // ¡ESTOS CONSOLE.LOGS SON CLAVE!
-          console.log("--- PortfolioDetail Component Debug ---");
-          console.log("Portfolio object received:", portfolioData); // Muestra el objeto completo
-          console.log("Title property:", portfolioData.Title);
-          console.log("EmbedCode property:", portfolioData.embedCode);
-          console.log("CoverImage URL:", portfolioData.coverImage?.[0]?.url); // Verifica si coverImage existe
-        } else {
-          setPortfolio(null);
-          setError(`No se encontró ningún proyecto con el slug: ${slug}`);
-          console.warn(`No portfolio found with slug: ${slug}`);
+        if (isMounted) { // Solo actualizar el estado si el componente sigue montado
+          if (portfolioData) {
+            setPortfolio(portfolioData);
+            console.log("--- PortfolioDetail Component Debug ---");
+            console.log("Portfolio object RECEIVED (after setPortfolio):", portfolioData);
+            console.log("Title property (after setPortfolio):", portfolioData.Title);
+            console.log("EmbedCode property (after setPortfolio):", portfolioData.embedCode);
+            console.log("CoverImage URL (after setPortfolio):", portfolioData.coverImage?.[0]?.url);
+          } else {
+            setPortfolio(null);
+            setError(`No se encontró ningún proyecto con el slug: ${slug}`);
+            console.warn(`No portfolio found with slug: ${slug}`);
+          }
         }
       } catch (err) {
-        console.error("Error al obtener detalles del portfolio en PortfolioDetail:", err);
-        setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
-        setPortfolio(null);
+        if (isMounted) {
+          console.error("Error al obtener detalles del portfolio en PortfolioDetail:", err);
+          setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
+          setPortfolio(null);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchPortfolioData();
-  }, [slug]);
+
+    return () => {
+      isMounted = false; // Cleanup: el componente se va a desmontar
+    };
+  }, [slug]); // Dependencia 'slug' es correcta aquí
 
   if (loading) {
     return <div className="text-center p-4">Cargando proyecto...</div>;
@@ -55,6 +65,7 @@ function PortfolioDetail() {
     return <div className="text-red-500 text-center p-4">Error: {error}</div>;
   }
 
+  // Si el portfolio es nulo, pero no hay error ni carga, muestra el mensaje de no disponible
   if (!portfolio) {
     return <div className="text-gray-700 text-center p-4">Proyecto no disponible.</div>;
   }
@@ -65,7 +76,6 @@ function PortfolioDetail() {
       ? portfolio.coverImage[0].url
       : `${strapiBaseUrl}${portfolio.coverImage[0].url}`)
     : null;
-
 
   return (
     <div className="bg-gray-100 min-h-screen py-16 px-4">
@@ -82,10 +92,15 @@ function PortfolioDetail() {
           />
         )}
 
-        {/* Solo para depuración - Mostrar directamente el objeto portfolio */}
-        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm">
+        {/* Muestra el objeto portfolio directamente para depuración */}
+        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm my-4">
+          <h3>DEBUG: Objeto Portfolio recibido por el componente:</h3>
           {JSON.stringify(portfolio, null, 2)}
         </pre>
+
+        {/* Render the rich text description - re-habilitar cuando funcione */}
+        {/* Asegúrate de que `renderStrapiDescription` esté definida en este archivo si la usas */}
+        {/* {portfolio.description && renderStrapiDescription(portfolio.description)} */}
 
         {/* SECTION FOR EMBED CODE */}
         {portfolio.embedCode && portfolio.embedCode.trim() !== "" && (
@@ -139,9 +154,6 @@ function PortfolioDetail() {
             ))}
           </div>
         )}
-
-        {/* Render description if needed - temporarily removed to simplify */}
-        {/* {portfolio.description && renderStrapiDescription(portfolio.description)} */}
 
         <div className="text-right mt-10 pt-6 border-t border-gray-200 text-gray-500 text-sm">
           <p>Publicado por: Tomas Millan Lanhozo</p>
