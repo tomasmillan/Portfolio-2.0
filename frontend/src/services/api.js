@@ -7,6 +7,7 @@ const API_URL =
 export const getPosts = async () => {
   try {
     const response = await axios.get(`${API_URL}/api/posts?populate=*`);
+    // Considera aplanar aquí también si tus componentes lo necesitan
     return response.data.data;
   } catch (error) {
     console.error("Error fetching posts:", error);
@@ -17,6 +18,7 @@ export const getPosts = async () => {
 export const getPodcasts = async () => {
   try {
     const response = await axios.get(`${API_URL}/api/podcasts?populate=*`);
+    // Considera aplanar aquí también si tus componentes lo necesitan
     return response.data.data;
   } catch (error) {
     console.error("Error fetching podcasts:", error);
@@ -26,16 +28,14 @@ export const getPodcasts = async () => {
 
 export const getPortfolio = async (options = {}) => {
   try {
-    let url = `${API_URL}/api/portfolios?populate=*`;
+    let url = `${API_URL}/api/portfolios?populate=*`; // Add sorting parameter if provided
 
-    // Add sorting parameter if provided
     if (options.sort) {
-      // Strapi expects sort as ?sort[0]=field:direction or ?sort=field:direction for single sort
-      // For simplicity, we'll use the direct sort string if it's simple
       url += `&sort=${options.sort}`;
     }
 
     const response = await axios.get(url);
+    // Considera aplanar aquí también si tus componentes lo necesitan
     return response.data.data;
   } catch (error) {
     console.error("Error fetching portfolios:", error);
@@ -43,18 +43,24 @@ export const getPortfolio = async (options = {}) => {
   }
 };
 
+// ** CAMBIOS AQUÍ: USAR API_URL **
 export const getPostBySlug = async (slug) => {
   try {
     const response = await fetch(
-      `https://portfolio-20-production-96a6.up.railway.app/api/posts?filters[slug][$eq]=${slug}&populate=*`
-    ); // Cambio aquí: /api/posts
+      `${API_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*` // Usar API_URL
+    );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("Data from API:", data);
+    console.log("Data from API (Post):", data); // Cambiado para diferenciar
     if (data.data && data.data.length > 0) {
-      return data.data[0];
+      // Aplanar aquí también para consistencia
+      const item = data.data[0];
+      return {
+        id: item.id,
+        ...item.attributes,
+      };
     } else {
       return null;
     }
@@ -64,18 +70,24 @@ export const getPostBySlug = async (slug) => {
   }
 };
 
+// ** CAMBIOS AQUÍ: USAR API_URL **
 export const getPodcastBySlug = async (slug) => {
   try {
     const response = await fetch(
-      `https://portfolio-20-production-96a6.up.railway.app/api/podcasts?filters[slug][$eq]=${slug}&populate=*`
+      `${API_URL}/api/podcasts?filters[slug][$eq]=${slug}&populate=*` // Usar API_URL
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log("Data from API:", data);
+    console.log("Data from API (Podcast):", data); // Cambiado para diferenciar
     if (data.data && data.data.length > 0) {
-      return data.data[0];
+      // Aplanar aquí también para consistencia
+      const item = data.data[0];
+      return {
+        id: item.id,
+        ...item.attributes,
+      };
     } else {
       return null;
     }
@@ -84,6 +96,8 @@ export const getPodcastBySlug = async (slug) => {
     return null;
   }
 };
+
+// Esta función ya estaba correcta, solo la mantengo por contexto
 export const getPortfolioBySlug = async (slug) => {
   try {
     const response = await axios.get(
@@ -91,64 +105,66 @@ export const getPortfolioBySlug = async (slug) => {
     );
     if (response.data.data && response.data.data.length > 0) {
       const item = response.data.data[0];
-      console.log("Data from API:", item);
+      console.log("Data from API (Portfolio):", item); // Cambiado para diferenciar
       return {
-        //deployed: item.attributes.deployed,
         id: item.id,
         ...item.attributes,
       };
     } else {
-      return null; // No se encontró ningún portfolio con ese slug
+      return null;
     }
   } catch (error) {
     console.error(`Error fetching portfolio with slug ${slug}:`, error);
-    return null; // Devuelve null en caso de error
+    return null;
   }
 };
 
+// ** CAMBIOS AQUÍ: USAR API_URL **
 export const getLatestPosts = async (limit = 3) => {
   try {
     const response = await fetch(
-      `https://portfolio-20-production-96a6.up.railway.app/api/posts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`
+      `${API_URL}/api/posts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*` // Usar API_URL
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return data.data;
+    return data.data; // Aquí los componentes suelen esperar el array completo sin aplanar
   } catch (error) {
     console.error("Error fetching latest posts:", error);
     return [];
   }
 };
 
+// ** CAMBIOS AQUÍ: USAR API_URL **
 export const getLatestPodcasts = async (limit = 3) => {
   try {
     const response = await fetch(
-      `https://portfolio-20-production-96a6.up.railway.app/api/podcasts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`
+      `${API_URL}/api/podcasts?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*` // Usar API_URL
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    return data.data;
+    return data.data; // Aquí los componentes suelen esperar el array completo sin aplanar
   } catch (error) {
     console.error("Error fetching latest podcasts:", error);
     return [];
   }
 };
 
+// ** CAMBIOS AQUÍ: USAR API_URL **
 export const getLatestPortfolios = async (limit = 4) => {
   try {
     const response = await fetch(
-      `https://portfolio-20-production-96a6.up.railway.app/api/portfolios?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*`
+      `${API_URL}/api/portfolios?sort=publishedAt:desc&pagination[limit]=${limit}&populate=*` // Usar API_URL
     );
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
-    console.log(data);
-    return data.data;
+    console.log("Latest Portfolios data:", data); // Cambiado para diferenciar
+    return data.data; // Aquí los componentes suelen esperar el array completo sin aplanar
   } catch (error) {
     console.error("Error fetching latest portfolios:", error);
     return [];
