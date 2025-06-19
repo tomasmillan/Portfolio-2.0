@@ -128,7 +128,7 @@ function PortfolioDetail() {
             if (block.level === 3) return <h3 key={index} className="text-xl font-bold mb-2 text-gray-800">{renderTextChildren(block.children)}</h3>;
             return null; // Fallback for other heading levels
         case 'list':
-            const ListTag = block.format === 'ordered' ? 'ol' : 'ul';
+            { const ListTag = block.format === 'ordered' ? 'ol' : 'ul';
             return (
                 <ListTag key={index} className={`mb-4 pl-5 ${block.format === 'ordered' ? 'list-decimal' : 'list-disc'}`}>
                     {block.children.map((listItem, liIndex) => (
@@ -137,7 +137,7 @@ function PortfolioDetail() {
                         </li>
                     ))}
                 </ListTag>
-            );
+            ); }
         case 'image':
             if (block.image?.url) { // Check if image data exists
                 return (

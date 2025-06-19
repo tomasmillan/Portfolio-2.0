@@ -11,7 +11,9 @@ function Home() {
   // const [latestPosts, setLatestPosts] = useState([]);
   // const [latestPodcasts, setLatestPodcasts] = useState([]);
   const [latestPortfolios, setLatestPortfolios] = useState([]);
-  const strapiBaseUrl = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway./api";
+  const strapiBaseUrl =
+    import.meta.env.VITE_STRAPI_API_URL ||
+    "https://portfolio-20-production-96a6.up.railway.app";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,27 +135,27 @@ function Home() {
                 className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 p-2" // Adjusted for 4 columns on large screens, added padding
               >
                 <Link
-                  to={`/portfolio/${portfolio.slug}`}
+                  to={`/portfolio/${portfolio.attributes.slug}`}
                   className="bg-white rounded-lg shadow h-full flex flex-col overflow-hidden transform transition duration-300 hover:scale-105" // Added hover effect
                 >
-                  {portfolio.coverImage?.[0]?.url && (
+                  {portfolio.attributes.coverImage?.[0]?.url && (
                     <img
-                      src={`${strapiBaseUrl}${portfolio.coverImage[0].url}`}
-                      alt={`Portada de ${portfolio.Title}`}
-                      className="w-full h-48 object-cover rounded-t-lg" // Increased image height
+                      src={`<span class="math-inline">${strapiBaseUrl}</span>{portfolio.attributes.coverImage[0].url}`} // Acceder a attributes.coverImage
+                      alt={`Portada de ${portfolio.attributes.Title}`} // Acceder a attributes.Title
+                      className="w-full h-48 object-cover rounded-t-lg"
                     />
                   )}
                   <div className="p-4 flex-grow flex flex-col">
                     {" "}
                     {/* Added flex-grow for consistent height */}
                     <h3 className="text-xl font-semibold mb-2">
-                      {portfolio.Title}
+                      {portfolio.attributes.Title}
                     </h3>
-                    {portfolio.description?.[0]?.children?.[0]?.text && (
+                    {portfolio.attributes.description?.[0]?.children?.[0]?.text && (
                       <p className="text-gray-600 text-sm flex-grow">
                         {" "}
                         {/* Added flex-grow */}
-                        {portfolio.description[0].children[0].text.substring(
+                        {portfolio.attributes.description[0].children[0].text.substring(
                           0,
                           100
                         )}

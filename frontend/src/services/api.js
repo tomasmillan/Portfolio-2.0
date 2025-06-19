@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_STRAPI_BASE_URL || 'https://portfolio-20-production-96a6.up.railway.app/api'; // Cambiar en producción
+const API_URL = import.meta.env.VITE_STRAPI_BASE_URL || 'https://portfolio-20-production-96a6.up.railway.app'; // Cambiar en producción
 
 export const getPosts = async () => {
   try {
-    const response = await axios.get(`${API_URL}/posts?populate=*`); 
+    const response = await axios.get(`${API_URL}/api/posts?populate=*`); 
     return response.data.data; 
   } catch (error) {
     console.error("Error fetching posts:", error);
@@ -14,7 +14,7 @@ export const getPosts = async () => {
 
 export const getPodcasts = async () => {
   try {
-    const response = await axios.get(`${API_URL}/podcasts?populate=*`);
+    const response = await axios.get(`${API_URL}/api/podcasts?populate=*`);
     return response.data.data;
   } catch (error) {
     console.error("Error fetching podcasts:", error);
@@ -24,7 +24,7 @@ export const getPodcasts = async () => {
 
 export const getPortfolio = async (options = {}) => {
   try {
-    let url = `${API_URL}/portfolios?populate=*`;
+    let url = `${API_URL}/api/portfolios?populate=*`;
 
     // Add sorting parameter if provided
     if (options.sort) {
@@ -81,11 +81,14 @@ export const getPodcastBySlug = async (slug) => {
 export const getPortfolioBySlug = async (slug) => {
   try {
     // This is the correct filter syntax for fetching by slug
-    const response = await axios.get(`${API_URL}/portfolios?filters[slug][$eq]=${slug}&populate=*`);
+    const response = await axios.get(`${API_URL}/api/portfolios?populate=*&sort=createdAt:desc&pagination[limit]=3`);
     
     // IMPORTANT: Return response.data.data which is the array of items
     // If no item is found, response.data.data will be an empty array []
-    return response.data.data; 
+    return response.data.data.map(item => ({
+      id: item.id,
+      ...item.attributes, // Spread the attributes to get all fields;
+    })); 
   } catch (error) {
     console.error(`Error fetching portfolio with slug ${slug}:`, error);
     // It's good practice to re-throw the error so the calling component can catch it
