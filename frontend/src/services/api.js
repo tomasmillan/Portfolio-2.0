@@ -99,37 +99,45 @@ export const getPortfolio = async (options = {}) => {
 
 // Esta función ya estaba correcta, solo la mantengo por contexto
 export const getPortfolioBySlug = async (slug) => {
- try {
+  try {
     const res = await axios.get(
       `${API_URL}/api/portfolios?filters[slug][$eq]=${slug}&populate=*`
     );
 
     const data = res.data?.data;
+
     if (!Array.isArray(data) || data.length === 0) {
       console.warn(`No portfolio found with slug: ${slug}`);
+
       return null;
     }
 
-    const item = data[0];
+    const item = data[0]; // Si tiene attributes, aplanalo
 
-    // Si tiene attributes, aplanalo
     const attributes = item.attributes || item;
 
     const flattenedPortfolio = {
       id: item.id,
+
       ...attributes,
+
       coverImage: attributes.coverImage?.data?.attributes || null,
+
       mediaFiles: Array.isArray(attributes.mediaFiles?.data)
         ? attributes.mediaFiles.data
+
             .map((f) => (f.attributes ? { id: f.id, ...f.attributes } : null))
+
             .filter(Boolean)
         : [],
     };
 
     console.log("Final Flattened Portfolio:", flattenedPortfolio);
+
     return flattenedPortfolio;
   } catch (error) {
     console.error(`Error fetching portfolio with slug ${slug}:`, error);
+
     return null;
   }
 };
