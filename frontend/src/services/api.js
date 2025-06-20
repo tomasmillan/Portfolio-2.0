@@ -103,46 +103,62 @@ export const getPortfolioBySlug = async (slug) => {
     const response = await axios.get(
       `${API_URL}/api/portfolios?filters[slug][$eq]=${slug}&populate=*`
     );
-    if (response.data.data && response.data.data.length > 0) {
-      const item = response.data.data[0];
-      const attributes = item.attributes;
 
-      console.log("Data from API (raw item):", item); // Para ver el objeto original de Strapi
-      console.log("Data from API (raw attributes):", attributes); // Para ver los atributos originales
-
-      // Aplanar el objeto principal
-      const flattenedPortfolio = {
-        id: item.id,
-        ...attributes,
-      };
-
-      // Aplanar coverImage si existe
-      if (attributes.coverImage && attributes.coverImage.data) {
-        flattenedPortfolio.coverImage = attributes.coverImage.data.attributes;
-        // Si necesitas el ID de la imagen, podrías hacerlo así:
-        // flattenedPortfolio.coverImage = { id: attributes.coverImage.data.id, ...attributes.coverImage.data.attributes };
-      }
-
-      // Aplanar mediaFiles si existen
-      if (attributes.mediaFiles && Array.isArray(attributes.mediaFiles.data)) {
-        flattenedPortfolio.mediaFiles = attributes.mediaFiles.data.map(
-          (fileItem) => fileItem.attributes
-          // Si necesitas el ID de cada archivo:
-          // (fileItem) => ({ id: fileItem.id, ...fileItem.attributes })
-        );
-      } else {
-          flattenedPortfolio.mediaFiles = []; // Asegura que sea un array vacío si no hay archivos
-      }
-
-      console.log("Data from API (flattened result):", flattenedPortfolio); // ¡Este es el objeto final aplanado!
-      return flattenedPortfolio;
-
-    } else {
-      return null; // No se encontró ningún portfolio con ese slug
+    // Si no hay datos o el array está vacío, devuelve null inmediatamente
+    if (!response.data || !response.data.data || response.data.data.length === 0) {
+      console.warn(`No portfolio data received from API for slug: ${slug}`);
+      return null;
     }
+
+    const item = response.data.data[0];
+    const attributes = item.attributes; // Asignar a una variable para mayor claridad y seguridad
+
+    console.log("Data from API (raw item - before processing):", item);
+    console.log("Data from API (raw attributes - before processing):", attributes);
+
+
+    // Verifica que attributes exista antes de intentar acceder a sus propiedades
+    if (!attributes) {
+        console.warn(`Attributes undefined for portfolio item with slug: ${slug}. Returning null.`);
+        return null;
+    }
+
+    // Inicia el objeto aplanado con id y los atributos directos
+    const flattenedPortfolio = {
+      id: item.id,
+      ...attributes, // Copia todos los atributos directos
+    };
+
+    // Aplanar coverImage de forma segura
+    if (attributes.coverImage?.data?.attributes) { // Usa optional chaining para seguridad
+      flattenedPortfolio.coverImage = attributes.coverImage.data.attributes;
+    } else {
+      flattenedPortfolio.coverImage = null; // Asegura que sea null si no está presente o mal formado
+    }
+
+    // Aplanar mediaFiles de forma segura
+    if (Array.isArray(attributes.mediaFiles?.data)) { // Usa optional chaining para seguridad
+      flattenedPortfolio.mediaFiles = attributes.mediaFiles.data.map(
+        (fileItem) => {
+          if (fileItem && fileItem.attributes) {
+            return {
+              id: fileItem.id,
+              ...fileItem.attributes,
+            };
+          }
+          return null; // Devuelve null si un elemento de archivo es inválido
+        }
+      ).filter(file => file !== null); // Filtra cualquier elemento nulo
+    } else {
+      flattenedPortfolio.mediaFiles = []; // Asegura que sea un array vacío
+    }
+
+    console.log("Data from API (flattened result - after processing):", flattenedPortfolio);
+    return flattenedPortfolio;
+
   } catch (error) {
     console.error(`Error fetching portfolio with slug ${slug}:`, error);
-    return null; // Devuelve null en caso de error
+    return null;
   }
 };
 

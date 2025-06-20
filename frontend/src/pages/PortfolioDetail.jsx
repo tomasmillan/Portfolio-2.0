@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { getPortfolioBySlug } from "../services/api";
 
 function PortfolioDetail() {
- const { slug } = useParams();
+  const { slug } = useParams();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,34 +12,32 @@ function PortfolioDetail() {
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_BASE_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
-  console.log("Strapi Base URL:", strapiBaseUrl); // Console log para verificar la URL base
+
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true; // Para evitar actualizaciones en componentes desmontados
 
     const fetchPortfolioData = async () => {
+      // Siempre resetear el estado de carga y error al iniciar una nueva búsqueda
       setLoading(true);
       setError(null);
-      console.log("Fetching portfolio data for slug:", slug);
-      console.log('pofolio state before fetch:', portfolio);
-      console.log("Strapi Base URL in useEffect:", strapiBaseUrl); // Verifica la URL base en el useEffect  
-      console.log("Slug from useParams:", slug); // Verifica el slug recibid
+      setPortfolio(null); // Asegurarse de que el portfolio se limpia al inicio
 
       try {
         const portfolioData = await getPortfolioBySlug(slug);
-        console.log("Portfolio data fetched:", portfolioData);
+
         if (isMounted) {
           if (portfolioData) {
+            // Solo actualizar si hay datos válidos
             setPortfolio(portfolioData);
             console.log("--- PortfolioDetail Component Debug ---");
             console.log("Portfolio object RECEIVED by setPortfolio (complete):", portfolioData);
             console.log("Title property (from received object):", portfolioData.Title);
             console.log("EmbedCode property (from received object):", portfolioData.embedCode);
-            // Ahora coverImage y mediaFiles deberían estar directamente aplanados
             console.log("CoverImage URL (after setPortfolio):", portfolioData.coverImage?.url);
             console.log("MediaFiles (after setPortfolio):", portfolioData.mediaFiles);
-
           } else {
-            setPortfolio(null);
+            // Si no se encuentran datos, se establece el error
+            setPortfolio(null); // Asegurar que el estado es null si no se encuentra
             setError(`No se encontró ningún proyecto con el slug: ${slug}`);
             console.warn(`No portfolio found with slug: ${slug}`);
           }
@@ -60,7 +58,7 @@ function PortfolioDetail() {
     fetchPortfolioData();
 
     return () => {
-      isMounted = false;
+      isMounted = false; // Cleanup para evitar fugas de memoria
     };
   }, [slug]);
 
@@ -82,7 +80,7 @@ function PortfolioDetail() {
     return <div className="text-gray-700 text-center p-4">Proyecto no disponible.</div>;
   }
 
-  // Lógica para obtener la URL de la coverImage (simplificada, ya no necesitas [0]?.attributes)
+  // Lógica para obtener la URL de la coverImage
   const coverImageUrl = portfolio.coverImage
     ? (portfolio.coverImage.url.startsWith("http") || portfolio.coverImage.url.startsWith("https")
       ? portfolio.coverImage.url
@@ -125,14 +123,13 @@ function PortfolioDetail() {
         )}
 
         {/* Existing media files handling for PDFs etc. */}
-        {/* Aquí portfolio.mediaFiles ya será el array directo de objetos de archivo aplanados */}
         {portfolio.mediaFiles && portfolio.mediaFiles.length > 0 && (
           <div className="mt-8 border-t pt-6 border-gray-200">
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">
               Archivos Adicionales
             </h3>
             {portfolio.mediaFiles.map((file, index) => (
-              <div key={file.id || index} className="mb-4"> {/* Usa file.id si lo aplanas con ID */}
+              <div key={file.id || index} className="mb-4">
                 {file.ext === ".pdf" ? (
                   <iframe
                     src={
