@@ -5,86 +5,103 @@ const API_URL =
   import.meta.env.VITE_STRAPI_BASE_URL ||
   "https://portfolio-20-production-96a6.up.railway.app";
 
-// Helper function to flatten a single Strapi item
+/**
+ * Helper function to safely flatten a single Strapi item.
+ * It expects 'item' to have an 'id' and 'attributes' property.
+ * Handles nested 'coverImage' and 'mediaFiles' with optional chaining.
+ * @param {object} item - The raw Strapi item object ({ id, attributes: {...} }).
+ * @returns {object|null} The flattened item or null if the input is invalid.
+ */
 const flattenStrapiItem = (item) => {
-  if (!item || !item.attributes) {
-    console.warn("Attempted to flatten an invalid Strapi item:", item);
+  // Defensive check: Ensure item and item.attributes exist
+  if (!item || typeof item.id === 'undefined' || !item.attributes) {
+    console.warn("flattenStrapiItem: Invalid Strapi item provided, returning null.", item);
     return null; // Return null for invalid items
   }
 
   const attributes = item.attributes;
 
   const flattened = {
-    id: item.id,
-    ...attributes,
-    // Safely flatten coverImage
+    id: item.id, // Always include the ID from the top level
+    ...attributes, // Spread all direct attributes
+    // Safely flatten coverImage using optional chaining
     coverImage: attributes.coverImage?.data?.attributes || null,
-    // Safely flatten mediaFiles (array)
+    // Safely flatten mediaFiles array using optional chaining and map/filter
     mediaFiles: Array.isArray(attributes.mediaFiles?.data)
       ? attributes.mediaFiles.data
-          .map((fileItem) => (fileItem?.attributes ? { id: fileItem.id, ...fileItem.attributes } : null))
-          .filter(Boolean) // Remove any nulls from the map
-      : [], // Ensure it's an empty array if no media files data
+          .map((fileItem) => {
+            // Ensure each fileItem and its attributes exist
+            if (fileItem && fileItem.attributes) {
+              return { id: fileItem.id, ...fileItem.attributes };
+            }
+            console.warn("flattenStrapiItem: Invalid mediaFile item found, skipping.", fileItem);
+            return null; // Return null for invalid file entries
+          })
+          .filter(Boolean) // Filter out any nulls resulting from invalid file entries
+      : [], // Ensure it's an empty array if no media files data or not an array
   };
   return flattened;
 };
 
-// Función genérica para obtener entradas de una colección (listas completas)
-export const getEntries = async (endpoint) => {
+/**
+ * Generic function to fetch entries from a collection.
+ * Includes populate=* by default for common use cases.
+ * @param {string} endpoint - The API endpoint (e.g., "posts", "portfolios").
+ * @param {string} queryString - Optional query string parameters (e.g., filters, sort, pagination).
+ * @returns {Array} An array of flattened items.
+ */
+const getEntries = async (endpoint, queryString = "") => {
   try {
-    const response = await axios.get(`${API_URL}/api/${endpoint}?populate=*`); // Added populate=* here too
+    const url = `${API_URL}/api/${endpoint}?populate=*${queryString ? `&${queryString}` : ''}`;
+    console.log(`Fetching from: ${url}`);
+    const response = await axios.get(url);
+
     if (!response.data?.data || !Array.isArray(response.data.data)) {
-        console.warn(`No valid data array found for ${endpoint}`);
+        console.warn(`getEntries: No valid data array found for ${endpoint}.`, response.data);
         return [];
     }
-    // Map and flatten each item
-    return response.data.data.map(flattenStrapiItem).filter(Boolean); // Filter out any nulls if flattenStrapiItem returned null
+    // Map and flatten each item, then filter out any nulls if flattenStrapiItem returned null
+    const flattenedData = response.data.data.map(flattenStrapiItem).filter(Boolean);
+    console.log(`getEntries: Fetched and flattened ${flattenedData.length} items for ${endpoint}.`);
+    return flattenedData;
   } catch (error) {
-    console.error(`Error fetching ${endpoint}:`, error);
+    console.error(`getEntries: Error fetching ${endpoint}:`, error);
     return [];
   }
 };
 
-// Función para obtener todos los posts, podcasts, portfolios
+// Functions to get all posts, podcasts, portfolios (general list)
 export const getPosts = async () => getEntries("posts");
 export const getPodcasts = async () => getEntries("podcasts");
 export const getPortfolios = async () => getEntries("portfolios");
 
 
-// Función genérica para obtener las últimas X entradas (para Home)
+// Function to get the latest X entries for lists (e.g., homepage)
 export const getLatestEntries = async (endpoint, limit = 3) => {
-  try {
-    const response = await axios.get(
-      `${API_URL}/api/${endpoint}?sort=createdAt:desc&pagination[limit]=${limit}&populate=*`
-    );
-    if (!response.data?.data || !Array.isArray(response.data.data)) {
-        console.warn(`No valid data array found for latest ${endpoint}`);
-        return [];
-    }
-    // Map and flatten each item
-    return response.data.data.map(flattenStrapiItem).filter(Boolean);
-  } catch (error) {
-    console.error(`Error fetching latest ${endpoint}:`, error);
-    return [];
-  }
+  // Use getEntries with specific sorting and pagination
+  return getEntries(endpoint, `sort=createdAt:desc&pagination[limit]=${limit}`);
 };
 
 export const getLatestPosts = async () => getLatestEntries("posts");
 export const getLatestPodcasts = async () => getLatestEntries("podcasts");
-export const getLatestPortfolios = async () => getLatestEntries("portfolios");
+export const getLatestPortfolios = async () => getLatestEntries("portfolios"); // THIS IS THE ONE CAUSING THE ERROR! It will now use the robust getEntries.
 
 
-// Función para obtener un solo elemento por slug (Post, Podcast, Portfolio)
-// Esta es la versión que ya habíamos optimizado para PortfolioDetail
+/**
+ * Function to fetch a single item by slug.
+ * @param {string} endpoint - The API endpoint (e.g., "portfolios", "posts").
+ * @param {string} slug - The slug of the item to fetch.
+ * @returns {object|null} The flattened item or null if not found/error.
+ */
 const getSingleEntryBySlug = async (endpoint, slug) => {
   try {
-    const res = await axios.get(
-      `${API_URL}/api/${endpoint}?filters[slug][$eq]=${slug}&populate=*`
-    );
+    const url = `${API_URL}/api/${endpoint}?filters[slug][$eq]=${slug}&populate=*`;
+    console.log(`Fetching single entry from: ${url}`);
+    const res = await axios.get(url);
 
     const data = res.data?.data;
     if (!Array.isArray(data) || data.length === 0) {
-      console.warn(`No ${endpoint} found with slug: ${slug} from API response.`);
+      console.warn(`getSingleEntryBySlug: No ${endpoint} found with slug: ${slug} from API response.`, res.data);
       return null;
     }
 
@@ -93,11 +110,11 @@ const getSingleEntryBySlug = async (endpoint, slug) => {
     const flattenedItem = flattenStrapiItem(item);
     
     // Log the final flattened item for debugging
-    console.log(`Final Flattened ${endpoint} (from api.js):`, flattenedItem);
+    console.log(`getSingleEntryBySlug: Final Flattened ${endpoint} for slug ${slug}:`, flattenedItem);
     return flattenedItem;
 
   } catch (error) {
-    console.error(`Error fetching ${endpoint} with slug ${slug}:`, error);
+    console.error(`getSingleEntryBySlug: Error fetching ${endpoint} with slug ${slug}:`, error);
     return null;
   }
 };
