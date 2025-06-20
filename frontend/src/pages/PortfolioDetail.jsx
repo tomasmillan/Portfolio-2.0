@@ -12,17 +12,21 @@ function PortfolioDetail() {
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_BASE_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
-
+  console.log("Strapi Base URL:", strapiBaseUrl); // Console log para verificar la URL base
   useEffect(() => {
     let isMounted = true;
 
     const fetchPortfolioData = async () => {
       setLoading(true);
       setError(null);
+      console.log("Fetching portfolio data for slug:", slug);
+      console.log('pofolio state before fetch:', portfolio);
+      console.log("Strapi Base URL in useEffect:", strapiBaseUrl); // Verifica la URL base en el useEffect  
+      console.log("Slug from useParams:", slug); // Verifica el slug recibid
 
       try {
         const portfolioData = await getPortfolioBySlug(slug);
-
+        console.log("Portfolio data fetched:", portfolioData);
         if (isMounted) {
           if (portfolioData) {
             setPortfolio(portfolioData);
