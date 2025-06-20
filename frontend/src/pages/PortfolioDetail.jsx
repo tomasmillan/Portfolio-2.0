@@ -1,37 +1,42 @@
 // src/components/PortfolioDetail.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { getPortfolioBySlug } from "../services/api";
 
 function PortfolioDetail() {
- const { slug } = useParams();
+  const { slug } = useParams();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Use a ref to store the fetched data in between renders/executions
-  const fetchedPortfolioRef = useRef(null); 
+  // Usamos un ref para almacenar los datos una vez que se han obtenido correctamente
+  // Esto evita re-fetches innecesarios en re-renders subsecuentes que a veces causan inconsistencias
+  const fetchedPortfolioCache = useRef({}); // Un objeto para cachear por slug
 
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_BASE_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true; // Para manejar el desmontaje del componente
 
     const fetchPortfolioData = async () => {
-      // If we already have data for this slug, don't refetch unless slug changes
-      // This is a common pattern to avoid unnecessary API calls on re-renders
-      if (fetchedPortfolioRef.current && fetchedPortfolioRef.current.slug === slug) {
-          setPortfolio(fetchedPortfolioRef.current);
+      // 1. Intentar cargar desde la caché local primero
+      if (fetchedPortfolioCache.current[slug]) {
+        if (isMounted) {
+          setPortfolio(fetchedPortfolioCache.current[slug]);
           setLoading(false);
-          console.log("Using cached portfolio data for:", slug);
-          return;
+          setError(null);
+          console.log("--- PortfolioDetail Cache Debug ---");
+          console.log("Using cached portfolio data for slug:", slug, fetchedPortfolioCache.current[slug]);
+        }
+        return; // Salir, ya tenemos los datos
       }
 
+      // 2. Si no está en caché, iniciar la carga
       setLoading(true);
       setError(null);
-      setPortfolio(null); // Clear previous portfolio data
+      setPortfolio(null); // Limpiar el estado anterior
 
       try {
         const portfolioData = await getPortfolioBySlug(slug);
@@ -39,7 +44,7 @@ function PortfolioDetail() {
         if (isMounted) {
           if (portfolioData) {
             setPortfolio(portfolioData);
-            fetchedPortfolioRef.current = portfolioData; // Cache the data
+            fetchedPortfolioCache.current[slug] = portfolioData; // Almacenar en caché
             console.log("--- PortfolioDetail Component Debug ---");
             console.log("Portfolio object RECEIVED by setPortfolio (complete):", portfolioData);
             console.log("Title property (from received object):", portfolioData.Title);
@@ -47,10 +52,10 @@ function PortfolioDetail() {
             console.log("CoverImage URL (after setPortfolio):", portfolioData.coverImage?.url);
             console.log("MediaFiles (after setPortfolio):", portfolioData.mediaFiles);
           } else {
+            // Si getPortfolioBySlug devuelve null (no encontró el portfolio)
             setPortfolio(null);
-            fetchedPortfolioRef.current = null; // Clear cache if not found
             setError(`No se encontró ningún proyecto con el slug: ${slug}`);
-            console.warn(`No portfolio found with slug: ${slug}`);
+            console.warn(`No portfolio found with slug: ${slug} in PortfolioDetail.`);
           }
         }
       } catch (err) {
@@ -58,7 +63,8 @@ function PortfolioDetail() {
           console.error("Error al obtener detalles del portfolio en PortfolioDetail:", err);
           setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
           setPortfolio(null);
-          fetchedPortfolioRef.current = null; // Clear cache on error
+          // Opcional: limpiar caché para este slug en caso de error
+          delete fetchedPortfolioCache.current[slug];
         }
       } finally {
         if (isMounted) {
@@ -69,18 +75,14 @@ function PortfolioDetail() {
 
     fetchPortfolioData();
 
+    // Función de limpieza de useEffect: se ejecuta cuando el componente se desmonta
+    // o antes de que el efecto se vuelva a ejecutar (si las dependencias cambian)
     return () => {
-      isMounted = false;
-      // No clear fetchedPortfolioRef here, it's a component-level cache for its lifetime
-      // Unless you explicitly want to clear it on unmount, which might be overkill
+      isMounted = false; // Marcar el componente como desmontado
     };
-  }, [slug]); // Depend on slug. If slug changes, refetch.
+  }, [slug]); // El efecto se vuelve a ejecutar solo cuando 'slug' cambia
 
-  // This log will execute on every render.
-  console.log("--- PortfolioDetail Render Debug ---");
-  console.log("Current 'portfolio' state during render:", portfolio);
-  console.log("Current 'Title' during render:", portfolio?.Title);
-  // Este log se ejecuta CADA VEZ que el componente se renderiza.
+  // Log que se ejecuta en cada renderizado del componente
   console.log("--- PortfolioDetail Render Debug ---");
   console.log("Current 'portfolio' state during render:", portfolio);
   console.log("Current 'Title' during render:", portfolio?.Title);
