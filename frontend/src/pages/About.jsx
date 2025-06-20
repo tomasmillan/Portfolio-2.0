@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export const About = () => {
+const About = () => {
   const myPhoto = "/images/perfilcv.jpg";
 
   return (
@@ -61,3 +61,4 @@ export const About = () => {
     </div>
   );
 };
+export default About;

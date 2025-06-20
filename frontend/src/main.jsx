@@ -17,6 +17,7 @@ import Services from "./pages/Services.jsx";
 import Testimonies from "./pages/Testimonies.jsx";
 import PortfolioDetail from "./pages/PortfolioDetail.jsx";
 
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <React.StrictMode> // <-- MAKE SURE THIS LINE IS COMMENTED OUT
     <BrowserRouter>
