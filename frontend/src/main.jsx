@@ -11,11 +11,11 @@ import Blog from "./pages/Blog.jsx";
 import Portfolio from "./pages/Portfolio.jsx";
 // import PostDetail from "./components/PostDetail.jsx";  Assuming you have these
 // import PodcastDetail from "./components/PodcastDetail.jsx"; // Assuming you have these
-import PortfolioDetail from "./components/PortfolioDetail.jsx"; // THIS ONE!
 import Contact from "./pages/Contact.jsx";
 import About from "./pages/About.jsx";
 import Services from "./pages/Services.jsx";
 import Testimonies from "./pages/Testimonies.jsx";
+import PortfolioDetail from "./pages/PortfolioDetail.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <React.StrictMode> // <-- MAKE SURE THIS LINE IS COMMENTED OUT
