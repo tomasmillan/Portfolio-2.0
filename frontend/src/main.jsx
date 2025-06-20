@@ -7,10 +7,10 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Import your components for routing
 import Home from "./pages/Home.jsx";
 import Blog from "./pages/Blog.jsx";
-import Podcast from "./pages/Podcast.jsx";
+// import Podcast from "./pages/Podcast.jsx";
 import Portfolio from "./pages/Portfolio.jsx";
-import PostDetail from "./components/PostDetail.jsx"; // Assuming you have these
-import PodcastDetail from "./components/PodcastDetail.jsx"; // Assuming you have these
+// import PostDetail from "./components/PostDetail.jsx";  Assuming you have these
+// import PodcastDetail from "./components/PodcastDetail.jsx"; // Assuming you have these
 import PortfolioDetail from "./components/PortfolioDetail.jsx"; // THIS ONE!
 import Contact from "./pages/Contact.jsx";
 import About from "./pages/About.jsx";
