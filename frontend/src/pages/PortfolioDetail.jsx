@@ -4,31 +4,42 @@ import { useParams } from "react-router-dom";
 import { getPortfolioBySlug } from "../services/api";
 
 function PortfolioDetail() {
-  const { slug } = useParams();
+ const { slug } = useParams();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Use a ref to store the fetched data in between renders/executions
+  const fetchedPortfolioRef = useRef(null); 
 
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_BASE_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
 
   useEffect(() => {
-    let isMounted = true; // Para evitar actualizaciones en componentes desmontados
+    let isMounted = true;
 
     const fetchPortfolioData = async () => {
-      // Siempre resetear el estado de carga y error al iniciar una nueva búsqueda
+      // If we already have data for this slug, don't refetch unless slug changes
+      // This is a common pattern to avoid unnecessary API calls on re-renders
+      if (fetchedPortfolioRef.current && fetchedPortfolioRef.current.slug === slug) {
+          setPortfolio(fetchedPortfolioRef.current);
+          setLoading(false);
+          console.log("Using cached portfolio data for:", slug);
+          return;
+      }
+
       setLoading(true);
       setError(null);
-      setPortfolio(null); // Asegurarse de que el portfolio se limpia al inicio
+      setPortfolio(null); // Clear previous portfolio data
 
       try {
         const portfolioData = await getPortfolioBySlug(slug);
 
         if (isMounted) {
           if (portfolioData) {
-            // Solo actualizar si hay datos válidos
             setPortfolio(portfolioData);
+            fetchedPortfolioRef.current = portfolioData; // Cache the data
             console.log("--- PortfolioDetail Component Debug ---");
             console.log("Portfolio object RECEIVED by setPortfolio (complete):", portfolioData);
             console.log("Title property (from received object):", portfolioData.Title);
@@ -36,8 +47,8 @@ function PortfolioDetail() {
             console.log("CoverImage URL (after setPortfolio):", portfolioData.coverImage?.url);
             console.log("MediaFiles (after setPortfolio):", portfolioData.mediaFiles);
           } else {
-            // Si no se encuentran datos, se establece el error
-            setPortfolio(null); // Asegurar que el estado es null si no se encuentra
+            setPortfolio(null);
+            fetchedPortfolioRef.current = null; // Clear cache if not found
             setError(`No se encontró ningún proyecto con el slug: ${slug}`);
             console.warn(`No portfolio found with slug: ${slug}`);
           }
@@ -47,6 +58,7 @@ function PortfolioDetail() {
           console.error("Error al obtener detalles del portfolio en PortfolioDetail:", err);
           setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
           setPortfolio(null);
+          fetchedPortfolioRef.current = null; // Clear cache on error
         }
       } finally {
         if (isMounted) {
@@ -58,10 +70,16 @@ function PortfolioDetail() {
     fetchPortfolioData();
 
     return () => {
-      isMounted = false; // Cleanup para evitar fugas de memoria
+      isMounted = false;
+      // No clear fetchedPortfolioRef here, it's a component-level cache for its lifetime
+      // Unless you explicitly want to clear it on unmount, which might be overkill
     };
-  }, [slug]);
+  }, [slug]); // Depend on slug. If slug changes, refetch.
 
+  // This log will execute on every render.
+  console.log("--- PortfolioDetail Render Debug ---");
+  console.log("Current 'portfolio' state during render:", portfolio);
+  console.log("Current 'Title' during render:", portfolio?.Title);
   // Este log se ejecuta CADA VEZ que el componente se renderiza.
   console.log("--- PortfolioDetail Render Debug ---");
   console.log("Current 'portfolio' state during render:", portfolio);
@@ -102,13 +120,11 @@ function PortfolioDetail() {
           />
         )}
 
-        {/* Muestra el objeto portfolio directamente para depuración */}
         <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm my-4">
           <h3>DEBUG: Objeto Portfolio actualmente en el estado del componente:</h3>
           {JSON.stringify(portfolio, null, 2)}
         </pre>
 
-        {/* SECTION FOR EMBED CODE */}
         {portfolio.embedCode && portfolio.embedCode.trim() !== "" && (
           <div className="mt-8 border-t pt-6 border-gray-200">
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">
@@ -116,13 +132,12 @@ function PortfolioDetail() {
             </h3>
             <div
               className="relative w-full overflow-hidden"
-              style={{ paddingBottom: "56.25%" }} // 16:9 aspect ratio
+              style={{ paddingBottom: "56.25%" }}
               dangerouslySetInnerHTML={{ __html: portfolio.embedCode }}
             />
           </div>
         )}
 
-        {/* Existing media files handling for PDFs etc. */}
         {portfolio.mediaFiles && portfolio.mediaFiles.length > 0 && (
           <div className="mt-8 border-t pt-6 border-gray-200">
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">
