@@ -13,17 +13,26 @@ const API_URL =
  * @returns {object|null} The flattened item or null if the input is invalid.
  */
 const flattenStrapiItem = (item) => {
-  // Defensive check: Ensure item and item.attributes exist
-  if (!item || typeof item.id === 'undefined' || !item.attributes) {
-    console.warn("flattenStrapiItem: Invalid Strapi item provided, returning null.", item);
-    return null; // Return null for invalid items
+  // *** NUEVO LOG AQUI PARA DEPURAR item.attributes ***
+  console.log("flattenStrapiItem: Debugging item:", item);
+  console.log("flattenStrapiItem: Debugging item.attributes:", item?.attributes);
+
+
+  // Defensive check: Ensure item and item.id exist.
+  // We'll trust that 'attributes' will be handled gracefully later,
+  // or that it should exist if item.id exists from a standard Strapi response.
+  if (!item || typeof item.id === 'undefined') { // Relaxed condition: Removed !item.attributes from here
+    console.warn("flattenStrapiItem: Invalid Strapi item provided (missing item or ID), returning null.", item);
+    return null; // Return null for truly invalid items
   }
 
-  const attributes = item.attributes;
+  // Get attributes, with a fallback to an empty object if somehow missing
+  // This is the key change to prevent TypeError if attributes is unexpectedly undefined
+  const attributes = item.attributes || {}; // <--- CRUCIAL: Fallback to empty object
 
   const flattened = {
     id: item.id, // Always include the ID from the top level
-    ...attributes, // Spread all direct attributes
+    ...attributes, // Spread all direct attributes (will be empty if attributes was missing)
     // Safely flatten coverImage using optional chaining
     coverImage: attributes.coverImage?.data?.attributes || null,
     // Safely flatten mediaFiles array using optional chaining and map/filter
@@ -84,7 +93,7 @@ export const getLatestEntries = async (endpoint, limit = 3) => {
 
 export const getLatestPosts = async () => getLatestEntries("posts");
 export const getLatestPodcasts = async () => getLatestEntries("podcasts");
-export const getLatestPortfolios = async () => getLatestEntries("portfolios"); // THIS IS THE ONE CAUSING THE ERROR! It will now use the robust getEntries.
+export const getLatestPortfolios = async () => getLatestEntries("portfolios");
 
 
 /**
@@ -107,7 +116,7 @@ const getSingleEntryBySlug = async (endpoint, slug) => {
 
     // Flatten the single item
     const item = data[0];
-    const flattenedItem = flattenStrapiItem(item);
+    const flattenedItem = flattenStrapiItem(item); // Use the common flattening helper
     
     // Log the final flattened item for debugging
     console.log(`getSingleEntryBySlug: Final Flattened ${endpoint} for slug ${slug}:`, flattenedItem);
