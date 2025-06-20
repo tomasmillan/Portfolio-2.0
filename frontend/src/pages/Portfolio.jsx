@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { getPortfolio } from "../services/api"; // Asumo que `getPortfolio` ahora acepta un objeto de opciones para el ordenamiento
 import { Link } from "react-router-dom";
+import { getPortfolios } from "../services/api";
 
 function Portfolio() {
   const [portfolio, setPortfolio] = useState([]);
@@ -19,7 +19,7 @@ function Portfolio() {
     setError(null);
     try {
       // Pasamos el objeto de opciones para el ordenamiento a la función de la API
-      const data = await getPortfolio({ sort: sortOrder });
+      const data = await getPortfolios({ sort: sortOrder });
       setPortfolio(data);
     } catch (err) {
       console.error("Error fetching portfolio:", err);
