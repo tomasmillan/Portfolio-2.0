@@ -105,17 +105,44 @@ export const getPortfolioBySlug = async (slug) => {
     );
     if (response.data.data && response.data.data.length > 0) {
       const item = response.data.data[0];
-      console.log("Data from API (Portfolio):", item); // Cambiado para diferenciar
-      return {
+      const attributes = item.attributes;
+
+      console.log("Data from API (raw item):", item); // Para ver el objeto original de Strapi
+      console.log("Data from API (raw attributes):", attributes); // Para ver los atributos originales
+
+      // Aplanar el objeto principal
+      const flattenedPortfolio = {
         id: item.id,
-        ...item.attributes,
+        ...attributes,
       };
+
+      // Aplanar coverImage si existe
+      if (attributes.coverImage && attributes.coverImage.data) {
+        flattenedPortfolio.coverImage = attributes.coverImage.data.attributes;
+        // Si necesitas el ID de la imagen, podrías hacerlo así:
+        // flattenedPortfolio.coverImage = { id: attributes.coverImage.data.id, ...attributes.coverImage.data.attributes };
+      }
+
+      // Aplanar mediaFiles si existen
+      if (attributes.mediaFiles && Array.isArray(attributes.mediaFiles.data)) {
+        flattenedPortfolio.mediaFiles = attributes.mediaFiles.data.map(
+          (fileItem) => fileItem.attributes
+          // Si necesitas el ID de cada archivo:
+          // (fileItem) => ({ id: fileItem.id, ...fileItem.attributes })
+        );
+      } else {
+          flattenedPortfolio.mediaFiles = []; // Asegura que sea un array vacío si no hay archivos
+      }
+
+      console.log("Data from API (flattened result):", flattenedPortfolio); // ¡Este es el objeto final aplanado!
+      return flattenedPortfolio;
+
     } else {
-      return null;
+      return null; // No se encontró ningún portfolio con ese slug
     }
   } catch (error) {
     console.error(`Error fetching portfolio with slug ${slug}:`, error);
-    return null;
+    return null; // Devuelve null en caso de error
   }
 };
 
