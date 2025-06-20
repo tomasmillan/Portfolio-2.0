@@ -9,42 +9,41 @@ function PortfolioDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Usamos un ref para almacenar los datos una vez que se han obtenido correctamente
-  // Esto evita re-fetches innecesarios en re-renders subsecuentes que a veces causan inconsistencias
-  const fetchedPortfolioCache = useRef({}); // Un objeto para cachear por slug
+  // useRef to cache fetched data to prevent redundant API calls on re-renders
+  const fetchedPortfolioCache = useRef({});
 
   const strapiBaseUrl =
     import.meta.env.VITE_STRAPI_BASE_URL ||
     "https://portfolio-20-production-96a6.up.railway.app";
 
   useEffect(() => {
-    let isMounted = true; // Para manejar el desmontaje del componente
+    let isMounted = true; // Flag to prevent state updates on unmounted component
 
     const fetchPortfolioData = async () => {
-      // 1. Intentar cargar desde la caché local primero
+      // 1. Check if data for this slug is already in cache
       if (fetchedPortfolioCache.current[slug]) {
         if (isMounted) {
           setPortfolio(fetchedPortfolioCache.current[slug]);
           setLoading(false);
-          setError(null);
+          setError(null); // Clear any previous errors
           console.log("--- PortfolioDetail Cache Debug ---");
           console.log("Using cached portfolio data for slug:", slug, fetchedPortfolioCache.current[slug]);
         }
-        return; // Salir, ya tenemos los datos
+        return; // Exit as data is loaded from cache
       }
 
-      // 2. Si no está en caché, iniciar la carga
+      // 2. Data not in cache, proceed with fetching
       setLoading(true);
       setError(null);
-      setPortfolio(null); // Limpiar el estado anterior
+      setPortfolio(null); // Clear previous state to show loading properly
 
       try {
-        const portfolioData = await getPortfolioBySlug(slug);
+        const portfolioData = await getPortfolioBySlug(slug); // Call the API function
 
         if (isMounted) {
           if (portfolioData) {
             setPortfolio(portfolioData);
-            fetchedPortfolioCache.current[slug] = portfolioData; // Almacenar en caché
+            fetchedPortfolioCache.current[slug] = portfolioData; // Cache the fetched data
             console.log("--- PortfolioDetail Component Debug ---");
             console.log("Portfolio object RECEIVED by setPortfolio (complete):", portfolioData);
             console.log("Title property (from received object):", portfolioData.Title);
@@ -52,18 +51,20 @@ function PortfolioDetail() {
             console.log("CoverImage URL (after setPortfolio):", portfolioData.coverImage?.url);
             console.log("MediaFiles (after setPortfolio):", portfolioData.mediaFiles);
           } else {
-            // Si getPortfolioBySlug devuelve null (no encontró el portfolio)
+            // If API returns null (no portfolio found for slug)
             setPortfolio(null);
             setError(`No se encontró ningún proyecto con el slug: ${slug}`);
-            console.warn(`No portfolio found with slug: ${slug} in PortfolioDetail.`);
+            console.warn(`No portfolio found with slug: ${slug} in PortfolioDetail component.`);
+            // Optionally clear this slug from cache if API explicitly says "not found"
+            delete fetchedPortfolioCache.current[slug]; 
           }
         }
       } catch (err) {
         if (isMounted) {
-          console.error("Error al obtener detalles del portfolio en PortfolioDetail:", err);
+          console.error("Error fetching portfolio details in PortfolioDetail:", err);
           setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
           setPortfolio(null);
-          // Opcional: limpiar caché para este slug en caso de error
+          // Clear cache on fetch error to retry next time
           delete fetchedPortfolioCache.current[slug];
         }
       } finally {
@@ -75,19 +76,18 @@ function PortfolioDetail() {
 
     fetchPortfolioData();
 
-    // Función de limpieza de useEffect: se ejecuta cuando el componente se desmonta
-    // o antes de que el efecto se vuelva a ejecutar (si las dependencias cambian)
+    // Cleanup function: runs when component unmounts or before effect re-runs
     return () => {
-      isMounted = false; // Marcar el componente como desmontado
+      isMounted = false; // Mark component as unmounted
     };
-  }, [slug]); // El efecto se vuelve a ejecutar solo cuando 'slug' cambia
+  }, [slug]); // Effect re-runs only when 'slug' changes
 
-  // Log que se ejecuta en cada renderizado del componente
+  // Log that runs on every render of the component
   console.log("--- PortfolioDetail Render Debug ---");
   console.log("Current 'portfolio' state during render:", portfolio);
   console.log("Current 'Title' during render:", portfolio?.Title);
 
-
+  // Conditional rendering based on loading, error, and portfolio state
   if (loading) {
     return <div className="text-center p-4">Cargando proyecto...</div>;
   }
@@ -100,7 +100,7 @@ function PortfolioDetail() {
     return <div className="text-gray-700 text-center p-4">Proyecto no disponible.</div>;
   }
 
-  // Lógica para obtener la URL de la coverImage
+  // Determine cover image URL
   const coverImageUrl = portfolio.coverImage
     ? (portfolio.coverImage.url.startsWith("http") || portfolio.coverImage.url.startsWith("https")
       ? portfolio.coverImage.url
@@ -122,11 +122,13 @@ function PortfolioDetail() {
           />
         )}
 
+        {/* Debug: Display raw portfolio object in DOM */}
         <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto text-sm my-4">
           <h3>DEBUG: Objeto Portfolio actualmente en el estado del componente:</h3>
           {JSON.stringify(portfolio, null, 2)}
         </pre>
 
+        {/* Section for embedded code */}
         {portfolio.embedCode && portfolio.embedCode.trim() !== "" && (
           <div className="mt-8 border-t pt-6 border-gray-200">
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">
@@ -134,12 +136,13 @@ function PortfolioDetail() {
             </h3>
             <div
               className="relative w-full overflow-hidden"
-              style={{ paddingBottom: "56.25%" }}
+              style={{ paddingBottom: "56.25%" }} // 16:9 aspect ratio
               dangerouslySetInnerHTML={{ __html: portfolio.embedCode }}
             />
           </div>
         )}
 
+        {/* Section for media files (PDFs, etc.) */}
         {portfolio.mediaFiles && portfolio.mediaFiles.length > 0 && (
           <div className="mt-8 border-t pt-6 border-gray-200">
             <h3 className="text-2xl font-semibold mb-4 text-gray-800">

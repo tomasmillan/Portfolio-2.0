@@ -5,10 +5,11 @@ const API_URL =
   import.meta.env.VITE_STRAPI_BASE_URL ||
   "https://portfolio-20-production-96a6.up.railway.app";
 
-// Función genérica para obtener entradas de una colección
+// Generic function to fetch entries from a collection
 const getEntries = async (endpoint, populate = "") => {
   try {
     const response = await axios.get(`${API_URL}/api/${endpoint}?${populate}`);
+    // Flatten attributes for general entries too, assuming similar structure
     return response.data.data.map((item) => ({
       id: item.id,
       ...item.attributes,
@@ -19,76 +20,38 @@ const getEntries = async (endpoint, populate = "") => {
   }
 };
 
-// Función para obtener todos los posts
+// Functions to get all posts, podcasts, portfolios (general list)
 export const getPosts = async () => getEntries("posts");
-
-// Función para obtener todos los podcasts
 export const getPodcasts = async () => getEntries("podcasts");
-
-// Función para obtener todos los portfolios
 export const getPortfolios = async () => getEntries("portfolios");
 
-// Función para obtener los últimos 3 posts (ejemplo)
-export const getLatestPosts = async () => {
+
+// Functions to get latest entries with populate
+const getLatestEntries = async (endpoint) => {
   try {
     const response = await axios.get(
-      `${API_URL}/api/posts?sort=createdAt:desc&pagination[limit]=3&populate=*`
+      `${API_URL}/api/${endpoint}?sort=createdAt:desc&pagination[limit]=3&populate=*`
     );
     return response.data.data.map((item) => {
       const attributes = item.attributes;
       return {
         id: item.id,
         ...attributes,
-        coverImage: attributes.coverImage?.data?.attributes || null,
+        coverImage: attributes.coverImage?.data?.attributes || null, // Flatten coverImage
       };
     });
   } catch (error) {
-    console.error("Error fetching latest posts:", error);
+    console.error(`Error fetching latest ${endpoint}:`, error);
     return [];
   }
 };
 
-// Función para obtener los últimos 3 podcasts
-export const getLatestPodcasts = async () => {
-  try {
-    const response = await axios.get(
-      `${API_URL}/api/podcasts?sort=createdAt:desc&pagination[limit]=3&populate=*`
-    );
-    return response.data.data.map((item) => {
-      const attributes = item.attributes;
-      return {
-        id: item.id,
-        ...attributes,
-        coverImage: attributes.coverImage?.data?.attributes || null,
-      };
-    });
-  } catch (error) {
-    console.error("Error fetching latest podcasts:", error);
-    return [];
-  }
-};
+export const getLatestPosts = async () => getLatestEntries("posts");
+export const getLatestPodcasts = async () => getLatestEntries("podcasts");
+export const getLatestPortfolios = async () => getLatestEntries("portfolios");
 
-// Función para obtener los últimos 3 portfolios
-export const getLatestPortfolios = async () => {
-  try {
-    const response = await axios.get(
-      `${API_URL}/api/portfolios?sort=createdAt:desc&pagination[limit]=3&populate=*`
-    );
-    return response.data.data.map((item) => {
-      const attributes = item.attributes;
-      return {
-        id: item.id,
-        ...attributes,
-        coverImage: attributes.coverImage?.data?.attributes || null,
-      };
-    });
-  } catch (error) {
-    console.error("Error fetching latest portfolios:", error);
-    return [];
-  }
-};
 
-// ***** FUNCIÓN CLAVE PARA PortfolioDetail *****
+// ***** KEY FUNCTION FOR PortfolioDetail (Your optimized version) *****
 export const getPortfolioBySlug = async (slug) => {
   try {
     const res = await axios.get(
@@ -97,22 +60,24 @@ export const getPortfolioBySlug = async (slug) => {
 
     const data = res.data?.data;
     if (!Array.isArray(data) || data.length === 0) {
-      console.warn(`No portfolio found with slug: ${slug} from API.`);
+      console.warn(`No portfolio found with slug: ${slug} from API response.`);
       return null;
     }
 
     const item = data[0];
-    const attributes = item.attributes || item; // Fallback por si 'attributes' no existe
+    // This fallback is generally for cases where attributes might be missing,
+    // but with Strapi's default structure, item.attributes should always exist if data exists.
+    const attributes = item.attributes || item;
 
     const flattenedPortfolio = {
       id: item.id,
-      ...attributes,
-      coverImage: attributes.coverImage?.data?.attributes || null,
-      mediaFiles: Array.isArray(attributes.mediaFiles?.data)
+      ...attributes, // Spread direct attributes (Title, slug, embedCode, etc.)
+      coverImage: attributes.coverImage?.data?.attributes || null, // Safely flatten coverImage
+      mediaFiles: Array.isArray(attributes.mediaFiles?.data) // Safely flatten mediaFiles array
         ? attributes.mediaFiles.data
             .map((f) => (f.attributes ? { id: f.id, ...f.attributes } : null))
-            .filter(Boolean) // Elimina cualquier 'null' resultante
-        : [],
+            .filter(Boolean) // Filter out any null entries if an item had no attributes
+        : [], // Ensure it's an empty array if no mediaFiles data
     };
 
     console.log("Final Flattened Portfolio (from api.js):", flattenedPortfolio);
@@ -123,7 +88,7 @@ export const getPortfolioBySlug = async (slug) => {
   }
 };
 
-// Función para obtener un post por slug
+// Functions to get single post/podcast by slug (similar flattening logic)
 export const getPostBySlug = async (slug) => {
   try {
     const response = await axios.get(
@@ -146,7 +111,6 @@ export const getPostBySlug = async (slug) => {
   }
 };
 
-// Función para obtener un podcast por slug
 export const getPodcastBySlug = async (slug) => {
   try {
     const response = await axios.get(
