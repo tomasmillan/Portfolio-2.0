@@ -25,10 +25,10 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/" element={<App />}>
           <Route index element={<Home />} />
           <Route path="blog" element={<Blog />} />
-          <Route path="podcast" element={<Podcast />} />
+          {/* <Route path="podcast" element={<Podcast />} /> */}
           <Route path="portfolio" element={<Portfolio />} />
-          <Route path="blog/:slug" element={<PostDetail />} />
-          <Route path="podcast/:slug" element={<PodcastDetail />} />
+          {/* <Route path="blog/:slug" element={<PostDetail />} /> */}
+          {/* <Route path="podcast/:slug" element={<PodcastDetail />} /> */}
           <Route path="portfolio/:slug" element={<PortfolioDetail />} /> {/* YOUR ROUTE */}
           <Route path="contact" element={<Contact />} />
           <Route path="about" element={<About />} />
