@@ -1,5 +1,5 @@
 // src/components/PortfolioDetail.jsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getPortfolioBySlug } from "../services/api";
 
