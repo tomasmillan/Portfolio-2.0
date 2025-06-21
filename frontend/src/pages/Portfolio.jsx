@@ -1,5 +1,5 @@
 // src/pages/Portfolio.jsx
-import React, { useEffect, useState } from "react"; // Eliminamos useCallback si no es estrictamente necesario
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getPortfolios } from "../services/api"; // Asegúrate que la ruta es correcta
 
@@ -9,6 +9,18 @@ function Portfolio() {
   const [error, setError] = useState(null);
   const [sortOrder, setSortOrder] = useState("createdAt:desc"); // Default: más recientes primero
 
+  // Definir la URL base para imágenes relativas
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL;
+
+  // Función para obtener la URL absoluta de un archivo
+  const getAbsoluteUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path; // Ya es una URL absoluta (ej. de Cloudinary)
+    }
+    return `${strapiBaseUrl}${path}`; // Es una URL relativa, concatenar con la base de Strapi
+  };
+
   // Un solo useEffect para manejar la obtención de datos y sus dependencias
   useEffect(() => {
     let isMounted = true; // Flag para evitar actualizaciones de estado en componentes desmontados
@@ -17,16 +29,23 @@ function Portfolio() {
       setLoading(true); // Iniciar carga
       setError(null); // Limpiar errores anteriores
       try {
-        // Pasamos el objeto de opciones para el ordenamiento a la función de la API
+        // *** CAMBIO CLAVE PARA EL SORT ***
+        // Pasamos el objeto de opciones para el ordenamiento a la función de la API.
+        // Asegúrate de que getPortfolios en api.js lo procesa correctamente.
         const data = await getPortfolios({ sort: sortOrder });
         if (isMounted) {
           setPortfolio(data);
-          console.log("Datos de portfolios recibidos y procesados para Portfolio Page:", data);
+          console.log(
+            "Datos de portfolios recibidos y procesados para Portfolio Page:",
+            data
+          );
         }
       } catch (err) {
         if (isMounted) {
           console.error("Error fetching portfolio:", err);
-          setError("Error al cargar los proyectos. Por favor, inténtalo de nuevo.");
+          setError(
+            "Error al cargar los proyectos. Por favor, inténtalo de nuevo."
+          );
         }
       } finally {
         if (isMounted) {
@@ -101,10 +120,15 @@ function Portfolio() {
                 key={item.id}
                 className="bg-white rounded-xl shadow hover:shadow-lg transition transform hover:scale-105 duration-200 ease-in-out w-full max-w-xs flex flex-col overflow-hidden"
               >
-                {item.coverImage && item.coverImage.url ? (
+                {/* *** CAMBIO PARA LAS IMAGENES: USAR getAbsoluteUrl *** */}
+                {item.coverImage?.url ? (
                   <img
-                    src={item.coverImage.url}
-                    alt={item.coverImage.alternativeText || item.Title || "Imagen de Portfolio"}
+                    src={getAbsoluteUrl(item.coverImage.url)} // Aplicar getAbsoluteUrl
+                    alt={
+                      item.coverImage.alternativeText ||
+                      item.Title ||
+                      "Imagen de Portfolio"
+                    }
                     className="w-full h-44 object-cover rounded-t-xl mb-3"
                   />
                 ) : (
@@ -116,11 +140,13 @@ function Portfolio() {
                   <h2 className="text-xl font-semibold text-gray-800 mb-2 truncate">
                     {item.Title || "Título Desconocido"}
                   </h2>
-                  {item.description && Array.isArray(item.description) && item.description[0]?.children?.[0]?.text && (
-                    <p className="text-gray-500 text-sm mb-2 flex-grow line-clamp-3">
-                      {item.description[0].children[0].text}
-                    </p>
-                  )}
+                  {item.description &&
+                    Array.isArray(item.description) &&
+                    item.description[0]?.children?.[0]?.text && (
+                      <p className="text-gray-500 text-sm mb-2 flex-grow line-clamp-3">
+                        {item.description[0].children[0].text}
+                      </p>
+                    )}
                   <p className="text-gray-400 text-xs mt-auto">
                     Publicado por: {item.publishedBy || "Tomas Millan Lanhozo"}
                   </p>

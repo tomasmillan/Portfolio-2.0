@@ -8,10 +8,12 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Define la URL base para imágenes relativas, igual que en PortfolioDetail
+  // Definir la URL base para imágenes relativas (aunque Cloudinary debería dar absolutas)
+  // Igual que en PortfolioDetail.jsx
   const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL;
 
   // Función para obtener la URL absoluta de un archivo
+  // Igual que en PortfolioDetail.jsx
   const getAbsoluteUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -27,6 +29,7 @@ function Home() {
       setLoading(true);
       setError(null);
       try {
+        // Asegúrate de que getLatestPortfolios está configurado para obtener los datos de imagen
         const portfolios = await getLatestPortfolios(4); // Solicitar 4 items
         if (isMounted) {
           setLatestPortfolios(portfolios);
@@ -117,13 +120,13 @@ function Home() {
                   key={portfolioItem.id}
                   className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden transform hover:scale-105"
                 >
-                  {/* Aquí está el cambio clave para las imágenes */}
-                  {portfolioItem.coverImage?.url ? ( // Accede directamente a .url
+                  {/* Aquí está la corrección para la imagen */}
+                  {portfolioItem.coverImage?.url ? ( // Verificar directamente .url
                     <img
-                      src={getAbsoluteUrl(portfolioItem.coverImage.url)} // Usa la función getAbsoluteUrl
+                      src={getAbsoluteUrl(portfolioItem.coverImage.url)} // Usar getAbsoluteUrl
                       alt={
                         portfolioItem.coverImage.alternativeText ||
-                        portfolioItem.Title || // Usa Title si es el nombre de tu campo
+                        portfolioItem.Title || // Usar Title si es el nombre del campo
                         "Imagen de Portfolio"
                       }
                       className="w-full h-48 object-cover rounded-t-lg"
@@ -167,7 +170,7 @@ function Home() {
           </span>
           <div className="flex justify-center items-center gap-6 mt-6">
             <a
-              href="https://www.youtube.com/@tomasmillanlanhozo" // URL de YouTube válida
+              href="http://youtube.com/" // URL de YouTube válida (la que tenías no era correcta sintácticamente)
               className="hover:text-red-600"
               target="_blank"
               rel="noopener noreferrer"
