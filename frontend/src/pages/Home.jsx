@@ -18,12 +18,17 @@ function Home() {
         const portfolios = await getLatestPortfolios(4); // Solicitar 4 items
         if (isMounted) {
           setLatestPortfolios(portfolios);
-          console.log("Datos de portfolios recibidos y procesados para Home:", portfolios);
+          console.log(
+            "Datos de portfolios recibidos y procesados para Home:",
+            portfolios
+          );
         }
       } catch (err) {
         if (isMounted) {
           console.error("Error fetching data for Home:", err);
-          setError("Error al cargar los últimos proyectos. Por favor, inténtalo de nuevo.");
+          setError(
+            "Error al cargar los últimos proyectos. Por favor, inténtalo de nuevo."
+          );
         }
       } finally {
         if (isMounted) {
@@ -89,7 +94,9 @@ function Home() {
 
         <div className="max-w-7xl mx-auto px-4">
           {latestPortfolios.length === 0 ? (
-            <p className="text-center text-gray-600">No hay proyectos recientes para mostrar.</p>
+            <p className="text-center text-gray-600">
+              No hay proyectos recientes para mostrar.
+            </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {latestPortfolios.map((portfolioItem) => (
@@ -98,10 +105,14 @@ function Home() {
                   key={portfolioItem.id}
                   className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden transform hover:scale-105"
                 >
-                  {portfolioItem.coverImage && portfolioItem.coverImage.url ? (
+                  {portfolioItem.coverImage && portfolioItem.coverImage.length > 0 && portfolioItem.coverImage[0].url ? (
                     <img
-                      src={portfolioItem.coverImage.url[0]}
-                      alt={portfolioItem.coverImage.alternativeText || portfolioItem.Title || "Imagen de Portfolio"}
+                      src={portfolioItem.coverImage[0].url}
+                      alt={
+                        portfolioItem.coverImage[0].alternativeText ||
+                        portfolioItem.Title ||
+                        "Imagen de Portfolio"
+                      }
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
                   ) : (
@@ -113,11 +124,13 @@ function Home() {
                     <h3 className="text-xl font-semibold mb-2 text-gray-800 truncate">
                       {portfolioItem.Title || "Título Desconocido"}
                     </h3>
-                    {portfolioItem.description && Array.isArray(portfolioItem.description) && portfolioItem.description[0]?.children?.[0]?.text && (
-                      <p className="text-gray-600 text-sm flex-grow line-clamp-3">
-                        {portfolioItem.description[0].children[0].text}
-                      </p>
-                    )}
+                    {portfolioItem.description &&
+                      Array.isArray(portfolioItem.description) &&
+                      portfolioItem.description[0]?.children?.[0]?.text && (
+                        <p className="text-gray-600 text-sm flex-grow line-clamp-3">
+                          {portfolioItem.description[0].children[0].text}
+                        </p>
+                      )}
                   </div>
                 </Link>
               ))}

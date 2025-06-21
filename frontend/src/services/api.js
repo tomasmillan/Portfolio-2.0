@@ -12,12 +12,8 @@ const API_URL =
  * @returns {object|null} The fully flattened item or null if invalid.
  */
 const flattenStrapiItem = (item) => {
-  // Debugging logs to understand the input 'item' structure
   console.log("flattenStrapiItem: Debugging input item:", item);
-  console.log("flattenStrapiItem: Debugging item.id:", item?.id);
-  console.log("flattenStrapiItem: Debugging item.attributes:", item?.attributes);
 
-  // Validate basic structure: must have an 'id'
   if (!item || typeof item.id === 'undefined') {
     console.warn("flattenStrapiItem: Invalid Strapi item provided (missing item or ID), returning null.", item);
     return null;
@@ -25,48 +21,52 @@ const flattenStrapiItem = (item) => {
 
   let finalAttributes = {};
 
-  // Check if it's the standard Strapi wrapped format {id, attributes: {...}}
   if (item.attributes && typeof item.attributes === 'object') {
     finalAttributes = item.attributes;
   } else {
-    // Assume it's already flattened and the top-level properties ARE the attributes
     console.warn("flattenStrapiItem: Item appears to be already flattened. Using top-level properties as attributes.", item);
-    finalAttributes = item; // Use the item itself as the attributes
+    finalAttributes = item;
   }
 
-  // Ensure attributes is at least an empty object for safe property access
   if (typeof finalAttributes !== 'object' || finalAttributes === null) {
-      finalAttributes = {};
+    finalAttributes = {};
   }
 
+  // 🔧 Detecta y normaliza coverImage
+  let coverImage = null;
+  if (Array.isArray(finalAttributes.coverImage) && finalAttributes.coverImage.length > 0) {
+    coverImage = finalAttributes.coverImage[0]; // ya viene como array directo
+  } else if (finalAttributes.coverImage?.data?.attributes) {
+    coverImage = finalAttributes.coverImage.data.attributes; // formato normal de Strapi
+  }
+
+  // 🔧 Normaliza mediaFiles
+  const mediaFiles = Array.isArray(finalAttributes.mediaFiles?.data)
+    ? finalAttributes.mediaFiles.data
+        .map((fileItem) => {
+          if (fileItem && fileItem.attributes) {
+            return { id: fileItem.id, ...fileItem.attributes };
+          }
+          console.warn("flattenStrapiItem: Invalid mediaFile item found, skipping.", fileItem);
+          return null;
+        })
+        .filter(Boolean)
+    : [];
 
   const flattened = {
-    id: item.id, // Always take ID from the top level
-    ...finalAttributes, // Spread the determined attributes
-    // Safely flatten coverImage from finalAttributes
-    coverImage: finalAttributes.coverImage?.data?.attributes || null,
-    // Safely flatten mediaFiles array from finalAttributes
-    mediaFiles: Array.isArray(finalAttributes.mediaFiles?.data)
-      ? finalAttributes.mediaFiles.data
-          .map((fileItem) => {
-            if (fileItem && fileItem.attributes) {
-              return { id: fileItem.id, ...fileItem.attributes };
-            }
-            console.warn("flattenStrapiItem: Invalid mediaFile item found, skipping.", fileItem);
-            return null;
-          })
-          .filter(Boolean)
-      : [],
+    id: item.id,
+    ...finalAttributes,
+    coverImage,
+    mediaFiles,
   };
-  
-  // Clean up potential duplicate ID if finalAttributes was 'item' itself
-  if (flattened.attributes) { // If original item had .attributes, remove it from flattened
+
+  if (flattened.attributes) {
     delete flattened.attributes;
   }
-  if (flattened.id && finalAttributes.id === flattened.id && Object.keys(finalAttributes).includes('id')) {
-    delete finalAttributes.id; // Prevent spreading duplicate 'id' if 'item' was used directly
-  }
 
+  if (flattened.id && finalAttributes.id === flattened.id && Object.keys(finalAttributes).includes('id')) {
+    delete finalAttributes.id;
+  }
 
   return flattened;
 };
