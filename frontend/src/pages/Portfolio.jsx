@@ -1,4 +1,4 @@
-// src/pages/Portfolio.jsx
+// src/pages/Portfolio.jsx (Sin cambios significativos necesarios, el tuyo ya debería funcionar con la api.js actualizada)
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getPortfolios } from "../services/api"; // Asegúrate que la ruta es correcta
@@ -9,30 +9,25 @@ function Portfolio() {
   const [error, setError] = useState(null);
   const [sortOrder, setSortOrder] = useState("createdAt:desc"); // Default: más recientes primero
 
-  // Definir la URL base para imágenes relativas
   const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL;
 
-  // Función para obtener la URL absoluta de un archivo
   const getAbsoluteUrl = (path) => {
     if (!path) return null;
     if (path.startsWith("http://") || path.startsWith("https://")) {
-      return path; // Ya es una URL absoluta (ej. de Cloudinary)
+      return path;
     }
-    return `${strapiBaseUrl}${path}`; // Es una URL relativa, concatenar con la base de Strapi
+    return `${strapiBaseUrl}${path}`;
   };
 
-  // Un solo useEffect para manejar la obtención de datos y sus dependencias
   useEffect(() => {
-    let isMounted = true; // Flag para evitar actualizaciones de estado en componentes desmontados
+    let isMounted = true;
 
     const fetchData = async () => {
-      setLoading(true); // Iniciar carga
-      setError(null); // Limpiar errores anteriores
+      setLoading(true);
+      setError(null);
       try {
-        // *** CAMBIO CLAVE PARA EL SORT ***
-        // Pasamos el objeto de opciones para el ordenamiento a la función de la API.
-        // Asegúrate de que getPortfolios en api.js lo procesa correctamente.
-        const data = await getPortfolios({ sort: sortOrder });
+        // Aquí se pasa el objeto { sort: sortOrder }
+        const data = await getPortfolios({ sort: sortOrder }); // ESTO ESTÁ CORRECTO
         if (isMounted) {
           setPortfolio(data);
           console.log(
@@ -43,27 +38,24 @@ function Portfolio() {
       } catch (err) {
         if (isMounted) {
           console.error("Error fetching portfolio:", err);
-          setError(
-            "Error al cargar los proyectos. Por favor, inténtalo de nuevo."
-          );
+          setError("Error al cargar los proyectos. Por favor, inténtalo de nuevo.");
         }
       } finally {
         if (isMounted) {
-          setLoading(false); // Finalizar carga
+          setLoading(false);
         }
       }
     };
 
-    fetchData(); // Llamar a la función de obtención de datos
+    fetchData();
 
-    // Función de limpieza para desmontaje del componente
     return () => {
       isMounted = false;
     };
-  }, [sortOrder]); // <-- Dependencia clave: re-ejecutar cuando sortOrder cambia
+  }, [sortOrder]); // <-- Dependencia correcta
 
   const handleSortChange = (event) => {
-    setSortOrder(event.target.value); // Actualiza el estado de sortOrder, lo que dispara el useEffect
+    setSortOrder(event.target.value);
   };
 
   return (
@@ -120,10 +112,9 @@ function Portfolio() {
                 key={item.id}
                 className="bg-white rounded-xl shadow hover:shadow-lg transition transform hover:scale-105 duration-200 ease-in-out w-full max-w-xs flex flex-col overflow-hidden"
               >
-                {/* *** CAMBIO PARA LAS IMAGENES: USAR getAbsoluteUrl *** */}
                 {item.coverImage?.url ? (
                   <img
-                    src={getAbsoluteUrl(item.coverImage.url)} // Aplicar getAbsoluteUrl
+                    src={getAbsoluteUrl(item.coverImage.url)}
                     alt={
                       item.coverImage.alternativeText ||
                       item.Title ||

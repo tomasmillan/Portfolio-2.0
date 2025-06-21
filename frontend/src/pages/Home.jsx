@@ -29,7 +29,6 @@ function Home() {
       setLoading(true);
       setError(null);
       try {
-        // Asegúrate de que getLatestPortfolios está configurado para obtener los datos de imagen
         const portfolios = await getLatestPortfolios(4); // Solicitar 4 items
         if (isMounted) {
           setLatestPortfolios(portfolios);
@@ -57,7 +56,7 @@ function Home() {
     return () => {
       isMounted = false;
     };
-  }, []); // <-- El array de dependencias está vacío porque solo se ejecuta una vez al montar
+  }, []);
 
   if (loading) {
     return <div className="text-center p-4">Cargando últimos proyectos...</div>;
@@ -120,13 +119,12 @@ function Home() {
                   key={portfolioItem.id}
                   className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden transform hover:scale-105"
                 >
-                  {/* Aquí está la corrección para la imagen */}
-                  {portfolioItem.coverImage?.url ? ( // Verificar directamente .url
+                  {portfolioItem.coverImage?.url ? ( // Verifica directamente .url
                     <img
                       src={getAbsoluteUrl(portfolioItem.coverImage.url)} // Usar getAbsoluteUrl
                       alt={
                         portfolioItem.coverImage.alternativeText ||
-                        portfolioItem.Title || // Usar Title si es el nombre del campo
+                        portfolioItem.Title || 
                         "Imagen de Portfolio"
                       }
                       className="w-full h-48 object-cover rounded-t-lg"
@@ -138,7 +136,7 @@ function Home() {
                   )}
                   <div className="p-4 flex-grow flex flex-col">
                     <h3 className="text-xl font-semibold mb-2 text-gray-800 truncate">
-                      {portfolioItem.Title || "Título Desconocido"} {/* Usa Title */}
+                      {portfolioItem.Title || "Título Desconocido"} 
                     </h3>
                     {portfolioItem.description &&
                       Array.isArray(portfolioItem.description) &&

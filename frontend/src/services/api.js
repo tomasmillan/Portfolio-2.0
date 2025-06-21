@@ -12,27 +12,23 @@ const API_URL =
  * @returns {object|null} The fully flattened item or null if invalid.
  */
 const flattenStrapiItem = (item) => {
-  console.log("flattenStrapiItem: Debugging input item:", item);
 
-  if (!item || typeof item.id === 'undefined') {
-    console.warn("flattenStrapiItem: Invalid Strapi item provided (missing item or ID), returning null.", item);
+  if (!item || typeof item.id === "undefined") {
     return null;
   }
 
   let finalAttributes = {};
 
-  if (item.attributes && typeof item.attributes === 'object') {
+  if (item.attributes && typeof item.attributes === "object") {
     finalAttributes = item.attributes;
   } else {
-    console.warn("flattenStrapiItem: Item appears to be already flattened. Using top-level properties as attributes.", item);
     finalAttributes = item;
   }
 
-  if (typeof finalAttributes !== 'object' || finalAttributes === null) {
+  if (typeof finalAttributes !== "object" || finalAttributes === null) {
     finalAttributes = {};
   }
 
-  // 🔧 Detecta y normaliza coverImage
   let coverImage = null;
   if (Array.isArray(finalAttributes.coverImage) && finalAttributes.coverImage.length > 0) {
     coverImage = finalAttributes.coverImage[0]; // ya viene como array directo
@@ -40,14 +36,12 @@ const flattenStrapiItem = (item) => {
     coverImage = finalAttributes.coverImage.data.attributes; // formato normal de Strapi
   }
 
-  // 🔧 Normaliza mediaFiles
   const mediaFiles = Array.isArray(finalAttributes.mediaFiles?.data)
     ? finalAttributes.mediaFiles.data
         .map((fileItem) => {
           if (fileItem && fileItem.attributes) {
             return { id: fileItem.id, ...fileItem.attributes };
           }
-          console.warn("flattenStrapiItem: Invalid mediaFile item found, skipping.", fileItem);
           return null;
         })
         .filter(Boolean)
@@ -60,13 +54,16 @@ const flattenStrapiItem = (item) => {
     mediaFiles,
   };
 
+  // Limpieza adicional, si 'attributes' todavía existe como propiedad superior, elimínala.
+  // Esto es para casos donde 'finalAttributes' ya era el objeto raíz de los atributos.
   if (flattened.attributes) {
     delete flattened.attributes;
   }
 
-  if (flattened.id && finalAttributes.id === flattened.id && Object.keys(finalAttributes).includes('id')) {
+  if (Object.prototype.hasOwnProperty.call(finalAttributes, 'id') && finalAttributes.id === flattened.id && finalAttributes !== item) {
     delete finalAttributes.id;
   }
+
 
   return flattened;
 };
@@ -75,21 +72,54 @@ const flattenStrapiItem = (item) => {
  * Generic function to fetch entries from a collection.
  * Includes populate=* by default for common use cases.
  * @param {string} endpoint - The API endpoint (e.g., "posts", "portfolios").
- * @param {string} queryString - Optional query string parameters (e.g., filters, sort, pagination).
+ * @param {object} options - Optional object with query parameters (e.g., { sort: 'field:order', filters: '...' }).
  * @returns {Array} An array of flattened items.
  */
-const getEntries = async (endpoint, queryString = "") => {
+const getEntries = async (endpoint, options = {}) => {
   try {
-    const url = `${API_URL}/api/${endpoint}?populate=*${queryString ? `&${queryString}` : ''}`;
-    console.log(`Fetching from: ${url}`);
+    let queryString = `populate=*`; // Siempre populate por defecto
+
+    // Si hay una opción de sort, la añadimos
+    if (options.sort) {
+      queryString += `&sort=${options.sort}`;
+    }
+    // Si hay filtros, los añadimos. Asumimos que options.filters ya viene formateado para URL.
+    // Esto es un simplificación sin 'qs'. Si necesitas filtros complejos, tendrías que construirlos aquí.
+    if (options.filters) {
+        queryString += `&${options.filters}`; // Asegúrate que esto sea algo como 'filters[slug][$eq]=some-slug'
+    }
+    // Si hay paginación, la añadimos
+    if (options.pagination) {
+        // Asumimos options.pagination puede ser un objeto { page: 1, pageSize: 10 }
+        // O directamente una string si lo construyes antes.
+        // Para este ejemplo, lo simplificamos esperando que sea ya una string si es compleja.
+        if (typeof options.pagination === 'string') {
+            queryString += `&${options.pagination}`;
+        } else if (typeof options.pagination === 'object' && options.pagination !== null) {
+            if (options.pagination.limit) {
+                queryString += `&pagination[limit]=${options.pagination.limit}`;
+            }
+            if (options.pagination.page) {
+                queryString += `&pagination[page]=${options.pagination.page}`;
+            }
+            if (options.pagination.start) {
+                queryString += `&pagination[start]=${options.pagination.start}`;
+            }
+            if (options.pagination.offset) {
+                queryString += `&pagination[offset]=${options.pagination.offset}`;
+            }
+        }
+    }
+
+    const url = `${API_URL}/api/${endpoint}?${queryString}`;
     const response = await axios.get(url);
 
     if (!response.data?.data || !Array.isArray(response.data.data)) {
-        console.warn(`getEntries: No valid data array found for ${endpoint}.`, response.data);
-        return [];
+    
+      return [];
     }
     const flattenedData = response.data.data.map(flattenStrapiItem).filter(Boolean);
-    console.log(`getEntries: Fetched and flattened ${flattenedData.length} items for ${endpoint}.`);
+    
     return flattenedData;
   } catch (error) {
     console.error(`getEntries: Error fetching ${endpoint}:`, error);
@@ -98,14 +128,20 @@ const getEntries = async (endpoint, queryString = "") => {
 };
 
 // Functions to get all posts, podcasts, portfolios (general list)
-export const getPosts = async () => getEntries("posts");
-export const getPodcasts = async () => getEntries("podcasts");
-export const getPortfolios = async () => getEntries("portfolios");
+// Estas funciones ahora pueden aceptar opciones
+export const getPosts = async (options = {}) => getEntries("posts", options);
+export const getPodcasts = async (options = {}) => getEntries("podcasts", options);
+// *** CAMBIO CLAVE AQUÍ: getPortfolios ahora acepta opciones ***
+export const getPortfolios = async (options = {}) => getEntries("portfolios", options);
 
 
 // Function to get the latest X entries for lists (e.g., homepage)
-export const getLatestEntries = async (endpoint, limit = 3) => {
-  return getEntries(endpoint, `sort=createdAt:desc&pagination[limit]=${limit}`);
+export const getLatestEntries = async (endpoint, limit = 4) => {
+  // Ahora pasamos las opciones como un objeto a getEntries
+  return getEntries(endpoint, {
+    sort: "createdAt:desc",
+    pagination: { limit: limit }, // Pasamos la paginación como objeto
+  });
 };
 
 export const getLatestPosts = async () => getLatestEntries("posts");
@@ -121,33 +157,26 @@ export const getLatestPortfolios = async () => getLatestEntries("portfolios");
  */
 const getSingleEntryBySlug = async (endpoint, slug) => {
   try {
-    const url = `${API_URL}/api/${endpoint}?filters[slug][$eq]=${slug}&populate=*`;
-    console.log(`Fetching single entry from: ${url}`);
-    const res = await axios.get(url);
+    // getEntries puede manejar esto ahora, aunque se podría optimizar para un solo resultado.
+    // Para simplificar y usar la misma base:
+    const data = await getEntries(endpoint, {
+      filters: `filters[slug][$eq]=${slug}`, // Construimos el filtro como string para 'getEntries'
+      // No necesitamos populate aquí si getEntries ya tiene populate=* por defecto,
+      // pero si necesitas populate específico para el detalle, lo añadirías aquí.
+      // Por ejemplo, para galería que NO es cubierta por populate=*
+       populate: { // Esto es un placeholder si necesitas poblar algo específico que no sea coverImage o mediaFiles
+         gallery: { // Suponiendo que 'gallery' es un campo de Strapi que contiene multiples imágenes
+           fields: ["url", "alternativeText"],
+         },
+       },
+    });
 
-    const data = res.data?.data;
-    if (!data) { // Could be single object or array
-        console.warn(`getSingleEntryBySlug: No data found for ${endpoint} with slug: ${slug} from API response.`, res.data);
-        return null;
+
+    if (data && data.length > 0) {
+      return data[0]; // getEntries ya devuelve un array de aplanados, tomamos el primero
     }
-
-    let itemToFlatten = null;
-    if (Array.isArray(data) && data.length > 0) {
-        itemToFlatten = data[0]; // If it's an array, take the first item
-    } else if (typeof data === 'object' && data !== null) {
-        itemToFlatten = data; // If it's a single object
-    }
-
-    if (!itemToFlatten) {
-        console.warn(`getSingleEntryBySlug: Could not determine item to flatten for slug: ${slug}.`, data);
-        return null;
-    }
-
-    const flattenedItem = flattenStrapiItem(itemToFlatten);
-    
-    console.log(`getSingleEntryBySlug: Final Flattened ${endpoint} for slug ${slug}:`, flattenedItem);
-    return flattenedItem;
-
+    // console.warn(`getSingleEntryBySlug: No data found for ${endpoint} with slug: ${slug}`); // Desactivar
+    return null;
   } catch (error) {
     console.error(`getSingleEntryBySlug: Error fetching ${endpoint} with slug ${slug}:`, error);
     return null;
