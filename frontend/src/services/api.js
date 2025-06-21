@@ -90,16 +90,7 @@ const flattenStrapiItem = (item) => {
   } else {
     flatItem.author = null; // O un valor predeterminado si no hay autor
   }
-
-  // --- Manejo de la descripción (rich text) ---
-  // Si tu campo de descripción es un 'Rich Text' en Strapi,
-  // por defecto, la API lo devuelve como un array de objetos (Block Content).
-  // Si no usas @strapi/blocks-react-renderer en el frontend,
-  // el componente de detalle lo manejará como texto plano si es array.
-  // Si en Strapi lo configuras para que devuelva Markdown o HTML, entonces sería un string aquí.
-  // Por ahora, se pasa tal cual viene de la API.
-
-  return flatItem;
+    return flatItem;
 };
 
 /**

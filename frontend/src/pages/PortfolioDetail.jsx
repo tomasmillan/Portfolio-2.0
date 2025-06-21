@@ -11,10 +11,10 @@ function PortfolioDetail() {
 
   const fetchedPortfolioCache = useRef({});
 
-  // strapiBaseUrl solo se usa si las URLs de las imágenes/archivos son relativas
-  const strapiBaseUrl =
-    import.meta.env.VITE_STRAPI_API_URL || // Usar VITE_STRAPI_API_URL consistentemente
-    "https://portfolio-20-production-96a6.up.railway.app";
+  // No necesitas strapiBaseUrl para concatenar si las URLs de Cloudinary ya son absolutas
+  // Dejarla solo para fallback si por alguna razón alguna URL es relativa
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL || "https://portfolio-20-production-96a6.up.railway.app";
+
 
   useEffect(() => {
     let isMounted = true;
@@ -46,9 +46,9 @@ function PortfolioDetail() {
             console.log("Portfolio object RECEIVED by setPortfolio (complete):", portfolioData);
             console.log("Title property (from received object):", portfolioData.Title);
             console.log("EmbedCode property (from received object):", portfolioData.embedCode);
-            console.log("CoverImage URL (after setPortfolio):", portfolioData.coverImage?.url);
-            console.log("MediaFiles (after setPortfolio):", portfolioData.mediaFiles);
-            // *** IMPORTANTE: CONSOLA DEL CAMPO DESCRIPTION ***
+            // Verifica directamente el objeto coverImage aplanado
+            console.log("CoverImage object (from received object):", portfolioData.coverImage);
+            console.log("MediaFiles (from received object):", portfolioData.mediaFiles);
             console.log("DESCRIPTION FIELD STRUCTURE (before rendering):", portfolioData.description);
           } else {
             setPortfolio(null);
@@ -113,44 +113,35 @@ function PortfolioDetail() {
     );
   }
 
+  // Determine cover image URL (keep your current logic, it's robust, but with console.log)
   const coverImageUrl = portfolio.coverImage?.url
-    ? portfolio.coverImage.url.startsWith("http") ||
-      portfolio.coverImage.url.startsWith("https")
-      ? portfolio.coverImage.url
-      : `${strapiBaseUrl}${portfolio.coverImage.url}`
+    ? (portfolio.coverImage.url.startsWith("http") || portfolio.coverImage.url.startsWith("https")
+      ? portfolio.coverImage.url // Ya es absoluta (de Cloudinary)
+      : `${strapiBaseUrl}${portfolio.coverImage.url}`) // Fallback si es relativa
     : null;
 
-  // --- Nueva lógica para renderizar la descripción ---
+  // AÑADE ESTE CONSOLE.LOG
+  console.log("PortfolioDetail.jsx - Final Cover Image URL (for img src):", coverImageUrl);
+
+
   const renderDescriptionContent = () => {
-    // 1. Si la descripción es un string, renderizar directamente (asumiendo HTML o texto plano)
     if (typeof portfolio.description === 'string') {
-      // Usar dangerouslySetInnerHTML si es HTML, de lo contrario, solo texto
-      // Si es HTML, asegúrate de que esté saneado para evitar XSS
-      // Para esta versión, lo asumiremos como HTML.
       return <div className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: portfolio.description }} />;
     }
-    // 2. Si es un array (formato Block Content de Strapi Rich Text)
     else if (Array.isArray(portfolio.description)) {
-      // Extraer el texto plano de los bloques
       const plainTextDescription = portfolio.description.map(block => {
         if (block.children && Array.isArray(block.children)) {
           return block.children.map(child => child.text).join('');
         }
         return '';
-      }).filter(Boolean).join('\n\n'); // Unir con dobles saltos de línea para párrafos
+      }).filter(Boolean).join('\n\n');
 
-      // Si necesitas renderizar el contenido enriquecido de forma segura y estructurada
-      // sin ReactMarkdown, la mejor forma sería procesar este array.
-      // Pero si tu API no te lo devuelve ya como HTML o Markdown,
-      // la forma más sencilla es mostrar el texto plano.
       if (plainTextDescription.trim() !== '') {
         return <p className="text-gray-700 leading-relaxed whitespace-pre-line">{plainTextDescription}</p>;
       }
     }
-    // 3. Si no hay descripción o es un formato inesperado
     return <p className="text-gray-600 italic">No hay descripción disponible para este proyecto.</p>;
   };
-  // --- Fin de la nueva lógica ---
 
   return (
     <div className="bg-gray-100 min-h-screen py-16 px-4">
@@ -176,7 +167,7 @@ function PortfolioDetail() {
 
         {coverImageUrl && (
           <img
-            src={coverImageUrl}
+            src={coverImageUrl} // <-- ¡Aquí se usa la URL final!
             alt={`Portada de ${portfolio.Title}`}
             className="w-full h-80 md:h-96 object-cover rounded-lg mb-8 shadow-md"
           />
@@ -187,7 +178,6 @@ function PortfolioDetail() {
           <h3 className="text-2xl font-semibold mb-4 text-gray-800">
             Descripción del Proyecto
           </h3>
-          {/* Aquí se llama a la función que renderiza la descripción */}
           {renderDescriptionContent()}
         </div>
 
@@ -221,6 +211,10 @@ function PortfolioDetail() {
                   file.url.startsWith("http") || file.url.startsWith("https")
                     ? file.url
                     : `${strapiBaseUrl}${file.url}`;
+
+                // AÑADE ESTE CONSOLE.LOG
+                console.log("PortfolioDetail.jsx - Rendering Media File URL:", fileUrl);
+
                 const fileTitle = file.alternativeText || file.name || `Archivo ${index + 1}`;
 
                 return (
@@ -248,7 +242,7 @@ function PortfolioDetail() {
                     ) : (
                       <div className="flex flex-col items-center justify-center text-center">
                         <img
-                          src={fileUrl}
+                          src={fileUrl} // <-- ¡Aquí se usa la URL final para mediaFiles!
                           alt={fileTitle}
                           className="w-full h-48 object-cover rounded-lg mb-3 shadow-sm"
                         />
