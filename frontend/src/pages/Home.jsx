@@ -8,6 +8,18 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Define la URL base para imágenes relativas, igual que en PortfolioDetail
+  const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL;
+
+  // Función para obtener la URL absoluta de un archivo
+  const getAbsoluteUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http://") || path.startsWith("https://")) {
+      return path; // Ya es una URL absoluta (ej. de Cloudinary)
+    }
+    return `${strapiBaseUrl}${path}`; // Es una URL relativa, concatenar con la base de Strapi
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -105,12 +117,13 @@ function Home() {
                   key={portfolioItem.id}
                   className="block bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden transform hover:scale-105"
                 >
-                  {portfolioItem.coverImage && portfolioItem.coverImage.length > 0 && portfolioItem.coverImage[0].url ? (
+                  {/* Aquí está el cambio clave para las imágenes */}
+                  {portfolioItem.coverImage?.url ? ( // Accede directamente a .url
                     <img
-                      src={portfolioItem.coverImage[0].url}
+                      src={getAbsoluteUrl(portfolioItem.coverImage.url)} // Usa la función getAbsoluteUrl
                       alt={
-                        portfolioItem.coverImage[0].alternativeText ||
-                        portfolioItem.Title ||
+                        portfolioItem.coverImage.alternativeText ||
+                        portfolioItem.Title || // Usa Title si es el nombre de tu campo
                         "Imagen de Portfolio"
                       }
                       className="w-full h-48 object-cover rounded-t-lg"
@@ -122,7 +135,7 @@ function Home() {
                   )}
                   <div className="p-4 flex-grow flex flex-col">
                     <h3 className="text-xl font-semibold mb-2 text-gray-800 truncate">
-                      {portfolioItem.Title || "Título Desconocido"}
+                      {portfolioItem.Title || "Título Desconocido"} {/* Usa Title */}
                     </h3>
                     {portfolioItem.description &&
                       Array.isArray(portfolioItem.description) &&
@@ -154,7 +167,7 @@ function Home() {
           </span>
           <div className="flex justify-center items-center gap-6 mt-6">
             <a
-              href="https://www.youtube.com/@mytomol" // URL de YouTube válida
+              href="https://www.youtube.com/@tomasmillanlanhozo" // URL de YouTube válida
               className="hover:text-red-600"
               target="_blank"
               rel="noopener noreferrer"
