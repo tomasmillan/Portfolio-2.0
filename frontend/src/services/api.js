@@ -6,49 +6,68 @@ const API_URL =
   "https://portfolio-20-production-96a6.up.railway.app";
 
 /**
- * Helper function to safely flatten a single Strapi item.
- * It expects 'item' to have an 'id' and 'attributes' property.
- * Handles nested 'coverImage' and 'mediaFiles' with optional chaining.
- * @param {object} item - The raw Strapi item object ({ id, attributes: {...} }).
- * @returns {object|null} The flattened item or null if the input is invalid.
+ * Helper function to safely flatten a single Strapi item,
+ * handling both wrapped ({id, attributes: {...}}) and already-flattened ({id, ...attributes}) formats.
+ * @param {object} item - The raw or partially flattened Strapi item object.
+ * @returns {object|null} The fully flattened item or null if invalid.
  */
 const flattenStrapiItem = (item) => {
-  // *** NUEVO LOG AQUI PARA DEPURAR item.attributes ***
-  console.log("flattenStrapiItem: Debugging item:", item);
+  // Debugging logs to understand the input 'item' structure
+  console.log("flattenStrapiItem: Debugging input item:", item);
+  console.log("flattenStrapiItem: Debugging item.id:", item?.id);
   console.log("flattenStrapiItem: Debugging item.attributes:", item?.attributes);
 
-
-  // Defensive check: Ensure item and item.id exist.
-  // We'll trust that 'attributes' will be handled gracefully later,
-  // or that it should exist if item.id exists from a standard Strapi response.
-  if (!item || typeof item.id === 'undefined') { // Relaxed condition: Removed !item.attributes from here
+  // Validate basic structure: must have an 'id'
+  if (!item || typeof item.id === 'undefined') {
     console.warn("flattenStrapiItem: Invalid Strapi item provided (missing item or ID), returning null.", item);
-    return null; // Return null for truly invalid items
+    return null;
   }
 
-  // Get attributes, with a fallback to an empty object if somehow missing
-  // This is the key change to prevent TypeError if attributes is unexpectedly undefined
-  const attributes = item.attributes || {}; // <--- CRUCIAL: Fallback to empty object
+  let finalAttributes = {};
+
+  // Check if it's the standard Strapi wrapped format {id, attributes: {...}}
+  if (item.attributes && typeof item.attributes === 'object') {
+    finalAttributes = item.attributes;
+  } else {
+    // Assume it's already flattened and the top-level properties ARE the attributes
+    console.warn("flattenStrapiItem: Item appears to be already flattened. Using top-level properties as attributes.", item);
+    finalAttributes = item; // Use the item itself as the attributes
+  }
+
+  // Ensure attributes is at least an empty object for safe property access
+  if (typeof finalAttributes !== 'object' || finalAttributes === null) {
+      finalAttributes = {};
+  }
+
 
   const flattened = {
-    id: item.id, // Always include the ID from the top level
-    ...attributes, // Spread all direct attributes (will be empty if attributes was missing)
-    // Safely flatten coverImage using optional chaining
-    coverImage: attributes.coverImage?.data?.attributes || null,
-    // Safely flatten mediaFiles array using optional chaining and map/filter
-    mediaFiles: Array.isArray(attributes.mediaFiles?.data)
-      ? attributes.mediaFiles.data
+    id: item.id, // Always take ID from the top level
+    ...finalAttributes, // Spread the determined attributes
+    // Safely flatten coverImage from finalAttributes
+    coverImage: finalAttributes.coverImage?.data?.attributes || null,
+    // Safely flatten mediaFiles array from finalAttributes
+    mediaFiles: Array.isArray(finalAttributes.mediaFiles?.data)
+      ? finalAttributes.mediaFiles.data
           .map((fileItem) => {
-            // Ensure each fileItem and its attributes exist
             if (fileItem && fileItem.attributes) {
               return { id: fileItem.id, ...fileItem.attributes };
             }
             console.warn("flattenStrapiItem: Invalid mediaFile item found, skipping.", fileItem);
-            return null; // Return null for invalid file entries
+            return null;
           })
-          .filter(Boolean) // Filter out any nulls resulting from invalid file entries
-      : [], // Ensure it's an empty array if no media files data or not an array
+          .filter(Boolean)
+      : [],
   };
+  
+  // Clean up potential duplicate ID if finalAttributes was 'item' itself
+  if (flattened.attributes) { // If original item had .attributes, remove it from flattened
+    delete flattened.attributes;
+  }
+  if (flattened.id && finalAttributes.id === flattened.id && Object.keys(finalAttributes).includes('id')) {
+    delete finalAttributes.id; // Prevent spreading duplicate 'id' if 'item' was used directly
+  }
+
+
   return flattened;
 };
 
@@ -69,7 +88,6 @@ const getEntries = async (endpoint, queryString = "") => {
         console.warn(`getEntries: No valid data array found for ${endpoint}.`, response.data);
         return [];
     }
-    // Map and flatten each item, then filter out any nulls if flattenStrapiItem returned null
     const flattenedData = response.data.data.map(flattenStrapiItem).filter(Boolean);
     console.log(`getEntries: Fetched and flattened ${flattenedData.length} items for ${endpoint}.`);
     return flattenedData;
@@ -87,7 +105,6 @@ export const getPortfolios = async () => getEntries("portfolios");
 
 // Function to get the latest X entries for lists (e.g., homepage)
 export const getLatestEntries = async (endpoint, limit = 3) => {
-  // Use getEntries with specific sorting and pagination
   return getEntries(endpoint, `sort=createdAt:desc&pagination[limit]=${limit}`);
 };
 
@@ -109,16 +126,25 @@ const getSingleEntryBySlug = async (endpoint, slug) => {
     const res = await axios.get(url);
 
     const data = res.data?.data;
-    if (!Array.isArray(data) || data.length === 0) {
-      console.warn(`getSingleEntryBySlug: No ${endpoint} found with slug: ${slug} from API response.`, res.data);
-      return null;
+    if (!data) { // Could be single object or array
+        console.warn(`getSingleEntryBySlug: No data found for ${endpoint} with slug: ${slug} from API response.`, res.data);
+        return null;
     }
 
-    // Flatten the single item
-    const item = data[0];
-    const flattenedItem = flattenStrapiItem(item); // Use the common flattening helper
+    let itemToFlatten = null;
+    if (Array.isArray(data) && data.length > 0) {
+        itemToFlatten = data[0]; // If it's an array, take the first item
+    } else if (typeof data === 'object' && data !== null) {
+        itemToFlatten = data; // If it's a single object
+    }
+
+    if (!itemToFlatten) {
+        console.warn(`getSingleEntryBySlug: Could not determine item to flatten for slug: ${slug}.`, data);
+        return null;
+    }
+
+    const flattenedItem = flattenStrapiItem(itemToFlatten);
     
-    // Log the final flattened item for debugging
     console.log(`getSingleEntryBySlug: Final Flattened ${endpoint} for slug ${slug}:`, flattenedItem);
     return flattenedItem;
 
