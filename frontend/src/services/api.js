@@ -1,4 +1,4 @@
-]// src/services/api.js
+// src/services/api.js
 // No necesitas importar flattenStrapiItem si está definido en el mismo archivo
 
 const STRAPI_API_URL = import.meta.env.VITE_STRAPI_API_URL || "https://portfolio-20-production-96a6.up.railway.app";
