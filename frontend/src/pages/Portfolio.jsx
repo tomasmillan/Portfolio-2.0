@@ -1,96 +1,139 @@
-// src/components/Portfolio.jsx
-import React, { useEffect, useState } from "react";
+// src/pages/Portfolio.jsx
+import React, { useEffect, useState } from "react"; // Eliminamos useCallback si no es estrictamente necesario
 import { Link } from "react-router-dom";
-import { getPortfolios } from "../services/api";
+import { getPortfolios } from "../services/api"; // Asegúrate que la ruta es correcta
 
 function Portfolio() {
-  const [portfolios, setPortfolios] = useState([]);
+  const [portfolio, setPortfolio] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortOrder, setSortOrder] = useState("createdAt:desc"); // Default: más recientes primero
 
-  // La URL base para concatenar si las imágenes son relativas
-  const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL || "https://portfolio-20-production-96a6.up.railway.app";
-
+  // Un solo useEffect para manejar la obtención de datos y sus dependencias
   useEffect(() => {
-    const fetchPortfolios = async () => {
-      setLoading(true);
+    let isMounted = true; // Flag para evitar actualizaciones de estado en componentes desmontados
+
+    const fetchData = async () => {
+      setLoading(true); // Iniciar carga
+      setError(null); // Limpiar errores anteriores
       try {
-        const data = await getPortfolios();
-        if (Array.isArray(data)) {
-          setPortfolios(data);
-        } else {
-          setPortfolios([]);
-          setError("La API no devolvió una lista válida de portfolios.");
+        // Pasamos el objeto de opciones para el ordenamiento a la función de la API
+        const data = await getPortfolios({ sort: sortOrder });
+        if (isMounted) {
+          setPortfolio(data);
+          console.log("Datos de portfolios recibidos y procesados para Portfolio Page:", data);
         }
       } catch (err) {
-        console.error("Error fetching portfolios:", err);
-        setError("Error al cargar los portfolios. Por favor, inténtalo de nuevo.");
+        if (isMounted) {
+          console.error("Error fetching portfolio:", err);
+          setError("Error al cargar los proyectos. Por favor, inténtalo de nuevo.");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false); // Finalizar carga
+        }
       }
     };
-    fetchPortfolios();
-  }, []);
 
-  if (loading) {
-    return <div className="text-center p-4">Cargando portfolios...</div>;
-  }
+    fetchData(); // Llamar a la función de obtención de datos
 
-  if (error) {
-    return <div className="text-red-500 text-center p-4">Error: {error}</div>;
-  }
+    // Función de limpieza para desmontaje del componente
+    return () => {
+      isMounted = false;
+    };
+  }, [sortOrder]); // <-- Dependencia clave: re-ejecutar cuando sortOrder cambia
 
-  if (portfolios.length === 0) {
-    return <div className="text-gray-700 text-center p-4">No hay portfolios disponibles.</div>;
-  }
+  const handleSortChange = (event) => {
+    setSortOrder(event.target.value); // Actualiza el estado de sortOrder, lo que dispara el useEffect
+  };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-4xl font-bold text-center mb-10 text-gray-800">Nuestro Portfolio</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {portfolios.map((item) => {
-          // Aquí generamos la URL, asumiendo que item.coverImage es un ARRAY
-          // Si item.coverImage es directamente el objeto, esto fallará.
-          const imageUrl = item.coverImage && item.coverImage[0]?.url // <-- ¡Volvemos a usar [0] aquí!
-            ? (item.coverImage[0].url.startsWith("http") || item.coverImage[0].url.startsWith("https")
-                ? item.coverImage[0].url
-                : `${strapiBaseUrl}${item.coverImage[0].url}`)
-            : null;
+    <div className="bg-gray-100 min-h-screen py-16 px-4">
+      <div className="max-w-6xl mx-auto text-center">
+        <h1 className="text-4xl font-bold mb-4 text-gray-800">Portfolio</h1>
+        <p className="text-lg text-gray-600 mb-8">
+          Acá están algunos de mis trabajos recientes en diseño, desarrollo y
+          branding digital.
+        </p>
 
-          console.log("Portfolio.jsx - Generated Cover Image URL (Old Logic):", imageUrl); // Para depuración
+        {/* Sorting Dropdown */}
+        <div className="mb-12 flex justify-center">
+          <label htmlFor="sort-select" className="sr-only">
+            Ordenar por:
+          </label>
+          <select
+            id="sort-select"
+            className="block w-full max-w-xs p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-gray-700"
+            value={sortOrder}
+            onChange={handleSortChange}
+          >
+            <option value="createdAt:desc">Más Recientes</option>
+            <option value="createdAt:asc">Más Antiguos</option>
+            <option value="Title:asc">Título (A-Z)</option>
+            <option value="Title:desc">Título (Z-A)</option>
+          </select>
+        </div>
 
-          return (
-            <Link
-              to={`/portfolio/${item.slug}`}
-              key={item.id}
-              className="block bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden"
-            >
-              {imageUrl ? (
-                <img
-                  src={imageUrl}
-                  alt={item.coverImage && item.coverImage[0]?.alternativeText || item.Title || "Imagen de Portfolio"}
-                  className="w-full h-44 object-cover rounded-t-xl mb-3"
-                />
-              ) : (
-                <div className="w-full h-44 bg-gray-200 flex items-center justify-center text-gray-500 text-sm rounded-t-xl mb-3">
-                  No hay imagen disponible
-                </div>
-              )}
-              <div className="p-5">
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">{item.Title}</h2>
-                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                  {/* Aquí el description se mostrará como JSON si es un array */}
-                  {typeof item.description === 'string'
-                    ? item.description.substring(0, 100) + '...'
-                    : JSON.stringify(item.description).substring(0, 100) + '...'} {/* Se muestra como JSON */}
-                </p>
-                {item.creado && (
-                  <p className="text-gray-500 text-xs">Publicado el: {item.creado}</p>
+        {loading && (
+          <div className="text-center py-8">
+            <span className="loading loading-spinner loading-lg text-gray-500"></span>
+            <p className="text-gray-600 mt-2">Cargando proyectos...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="text-center py-8 text-red-600 font-semibold">
+            <p>{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && portfolio.length === 0 && (
+          <div className="text-center py-8 text-gray-600">
+            <p>No hay proyectos para mostrar.</p>
+          </div>
+        )}
+
+        {!loading && !error && portfolio.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+            {portfolio.map((item) => (
+              <Link
+                to={`/portfolio/${item.slug}`}
+                key={item.id}
+                className="bg-white rounded-xl shadow hover:shadow-lg transition transform hover:scale-105 duration-200 ease-in-out w-full max-w-xs flex flex-col overflow-hidden"
+              >
+                {item.coverImage && item.coverImage.url ? (
+                  <img
+                    src={item.coverImage.url}
+                    alt={item.coverImage.alternativeText || item.Title || "Imagen de Portfolio"}
+                    className="w-full h-44 object-cover rounded-t-xl mb-3"
+                  />
+                ) : (
+                  <div className="w-full h-44 bg-gray-200 flex items-center justify-center text-gray-500 text-sm rounded-t-xl mb-3">
+                    No hay imagen disponible
+                  </div>
                 )}
-              </div>
-            </Link>
-          );
-        })}
+                <div className="p-4 flex-grow flex flex-col">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2 truncate">
+                    {item.Title || "Título Desconocido"}
+                  </h2>
+                  {item.description && Array.isArray(item.description) && item.description[0]?.children?.[0]?.text && (
+                    <p className="text-gray-500 text-sm mb-2 flex-grow line-clamp-3">
+                      {item.description[0].children[0].text}
+                    </p>
+                  )}
+                  <p className="text-gray-400 text-xs mt-auto">
+                    Publicado por: {item.publishedBy || "Tomas Millan Lanhozo"}
+                  </p>
+                  {item.createdAt && (
+                    <p className="text-gray-400 text-xs">
+                      Fecha: {new Date(item.createdAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

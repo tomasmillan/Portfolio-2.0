@@ -100,7 +100,7 @@ function Home() {
                 >
                   {portfolioItem.coverImage && portfolioItem.coverImage.url ? (
                     <img
-                      src={portfolioItem.coverImage.url}
+                      src={portfolioItem.coverImage.url[0]}
                       alt={portfolioItem.coverImage.alternativeText || portfolioItem.Title || "Imagen de Portfolio"}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />
