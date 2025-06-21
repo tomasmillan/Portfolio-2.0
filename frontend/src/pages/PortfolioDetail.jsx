@@ -11,10 +11,8 @@ function PortfolioDetail() {
 
   const fetchedPortfolioCache = useRef({});
 
-  // No necesitas strapiBaseUrl para concatenar si las URLs de Cloudinary ya son absolutas
-  // Dejarla solo para fallback si por alguna razón alguna URL es relativa
+  // La URL base para concatenar si las imágenes son relativas
   const strapiBaseUrl = import.meta.env.VITE_STRAPI_BASE_URL || "https://portfolio-20-production-96a6.up.railway.app";
-
 
   useEffect(() => {
     let isMounted = true;
@@ -25,8 +23,6 @@ function PortfolioDetail() {
           setPortfolio(fetchedPortfolioCache.current[slug]);
           setLoading(false);
           setError(null);
-          console.log("--- PortfolioDetail Cache Debug ---");
-          console.log("Using cached portfolio data for slug:", slug, fetchedPortfolioCache.current[slug]);
         }
         return;
       }
@@ -44,17 +40,12 @@ function PortfolioDetail() {
             fetchedPortfolioCache.current[slug] = portfolioData;
             console.log("--- PortfolioDetail Component Debug ---");
             console.log("Portfolio object RECEIVED by setPortfolio (complete):", portfolioData);
-            console.log("Title property (from received object):", portfolioData.Title);
-            console.log("EmbedCode property (from received object):", portfolioData.embedCode);
-            // Verifica directamente el objeto coverImage aplanado
+            // Esto debería mostrarte el objeto aplanado, pero la lógica de renderizado en el JSX causará el problema
             console.log("CoverImage object (from received object):", portfolioData.coverImage);
-            console.log("MediaFiles (from received object):", portfolioData.mediaFiles);
             console.log("DESCRIPTION FIELD STRUCTURE (before rendering):", portfolioData.description);
           } else {
             setPortfolio(null);
             setError(`No se encontró ningún proyecto con el slug: ${slug}`);
-            console.warn(`No portfolio found with slug: ${slug} in PortfolioDetail component.`);
-            delete fetchedPortfolioCache.current[slug];
           }
         }
       } catch (err) {
@@ -62,7 +53,6 @@ function PortfolioDetail() {
           console.error("Error fetching portfolio details in PortfolioDetail:", err);
           setError("Error al cargar el proyecto. Por favor, inténtalo de nuevo.");
           setPortfolio(null);
-          delete fetchedPortfolioCache.current[slug];
         }
       } finally {
         if (isMounted) {
@@ -77,10 +67,6 @@ function PortfolioDetail() {
       isMounted = false;
     };
   }, [slug]);
-
-  console.log("--- PortfolioDetail Render Debug ---");
-  console.log("Current 'portfolio' state during render:", portfolio);
-  console.log("Current 'Title' during render:", portfolio?.Title);
 
   if (loading) {
     return (
@@ -113,32 +99,24 @@ function PortfolioDetail() {
     );
   }
 
-  // Determine cover image URL (keep your current logic, it's robust, but with console.log)
-  const coverImageUrl = portfolio.coverImage?.url
-    ? (portfolio.coverImage.url.startsWith("http") || portfolio.coverImage.url.startsWith("https")
-      ? portfolio.coverImage.url // Ya es absoluta (de Cloudinary)
-      : `${strapiBaseUrl}${portfolio.coverImage.url}`) // Fallback si es relativa
+  // --- Lógica de URL de imagen anterior (antes de la corrección) ---
+  // Esto buscará item.coverImage[0].url, que es lo que no se encontraba antes
+  const coverImageUrl = portfolio.coverImage && portfolio.coverImage[0]?.url // <-- ¡Volvemos a usar [0] aquí!
+    ? (portfolio.coverImage[0].url.startsWith("http") || portfolio.coverImage[0].url.startsWith("https")
+        ? portfolio.coverImage[0].url
+        : `${strapiBaseUrl}${portfolio.coverImage[0].url}`)
     : null;
 
-  // AÑADE ESTE CONSOLE.LOG
-  console.log("PortfolioDetail.jsx - Final Cover Image URL (for img src):", coverImageUrl);
+  console.log("PortfolioDetail.jsx - Final Cover Image URL (Old Logic):", coverImageUrl); // Para depuración
 
-
+  // Función para renderizar la descripción como JSON si es array
   const renderDescriptionContent = () => {
     if (typeof portfolio.description === 'string') {
       return <div className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: portfolio.description }} />;
     }
+    // ¡Aquí se renderiza como JSON para replicar el estado anterior!
     else if (Array.isArray(portfolio.description)) {
-      const plainTextDescription = portfolio.description.map(block => {
-        if (block.children && Array.isArray(block.children)) {
-          return block.children.map(child => child.text).join('');
-        }
-        return '';
-      }).filter(Boolean).join('\n\n');
-
-      if (plainTextDescription.trim() !== '') {
-        return <p className="text-gray-700 leading-relaxed whitespace-pre-line">{plainTextDescription}</p>;
-      }
+      return <pre className="text-gray-700 leading-relaxed overflow-auto">{JSON.stringify(portfolio.description, null, 2)}</pre>;
     }
     return <p className="text-gray-600 italic">No hay descripción disponible para este proyecto.</p>;
   };
@@ -167,7 +145,7 @@ function PortfolioDetail() {
 
         {coverImageUrl && (
           <img
-            src={coverImageUrl} // <-- ¡Aquí se usa la URL final!
+            src={coverImageUrl}
             alt={`Portada de ${portfolio.Title}`}
             className="w-full h-80 md:h-96 object-cover rounded-lg mb-8 shadow-md"
           />
@@ -207,53 +185,68 @@ function PortfolioDetail() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {portfolio.mediaFiles.map((file, index) => {
+                // Asumiendo que mediaFiles[index] es también un ARRAY con el objeto de archivo dentro
                 const fileUrl =
-                  file.url.startsWith("http") || file.url.startsWith("https")
-                    ? file.url
-                    : `${strapiBaseUrl}${file.url}`;
+                  file && file[0]?.url // <-- ¡Volvemos a usar [0] aquí!
+                    ? (file[0].url.startsWith("http") || file[0].url.startsWith("https")
+                        ? file[0].url
+                        : `${strapiBaseUrl}${file[0].url}`)
+                    : null;
+                
+                console.log("PortfolioDetail.jsx - Rendering Media File URL (Old Logic):", fileUrl);
 
-                // AÑADE ESTE CONSOLE.LOG
-                console.log("PortfolioDetail.jsx - Rendering Media File URL:", fileUrl);
-
-                const fileTitle = file.alternativeText || file.name || `Archivo ${index + 1}`;
+                const fileTitle = file && file[0]?.alternativeText || file && file[0]?.name || `Archivo ${index + 1}`; // <-- Asegurarse de acceder a las propiedades correctas
 
                 return (
                   <div key={file.id || index} className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
-                    {file.ext === ".pdf" ? (
+                    {/* Necesitaríamos el 'ext' y otras propiedades de file[0] */}
+                    {file && file[0]?.ext === ".pdf" ? ( // <-- Acceder a file[0].ext
                       <div>
                         <p className="font-semibold mb-2">{fileTitle}</p>
-                        <iframe
-                          src={fileUrl}
-                          width="100%"
-                          height="400px"
-                          title={`PDF de ${portfolio.Title}`}
-                          className="rounded-lg shadow-md border border-gray-200 w-full h-auto"
-                          style={{ minHeight: '300px' }}
-                        />
-                        <a
-                          href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out text-sm"
-                        >
-                          Abrir PDF en nueva pestaña
-                        </a>
+                        {fileUrl && (
+                          <iframe
+                            src={fileUrl}
+                            width="100%"
+                            height="400px"
+                            title={`PDF de ${portfolio.Title}`}
+                            className="rounded-lg shadow-md border border-gray-200 w-full h-auto"
+                            style={{ minHeight: '300px' }}
+                          />
+                        )}
+                        {fileUrl && (
+                          <a
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out text-sm"
+                          >
+                            Abrir PDF en nueva pestaña
+                          </a>
+                        )}
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-center">
-                        <img
-                          src={fileUrl} // <-- ¡Aquí se usa la URL final para mediaFiles!
-                          alt={fileTitle}
-                          className="w-full h-48 object-cover rounded-lg mb-3 shadow-sm"
-                        />
-                        <a
-                          href={fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out text-sm"
-                        >
-                          Ver Imagen ({fileTitle})
-                        </a>
+                        {fileUrl ? (
+                          <img
+                            src={fileUrl}
+                            alt={fileTitle}
+                            className="w-full h-48 object-cover rounded-lg mb-3 shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500 text-sm rounded-lg mb-3">
+                            No hay imagen de archivo disponible
+                          </div>
+                        )}
+                        {fileUrl && (
+                          <a
+                            href={fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 ease-in-out text-sm"
+                          >
+                            Ver Imagen ({fileTitle})
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>
