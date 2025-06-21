@@ -1,40 +1,50 @@
-import React, { useEffect, useState, useCallback } from "react";
+// src/pages/Portfolio.jsx
+import React, { useEffect, useState } from "react"; // Eliminamos useCallback si no es estrictamente necesario
 import { Link } from "react-router-dom";
-import { getPortfolios } from "../services/api";
+import { getPortfolios } from "../services/api"; // Asegúrate que la ruta es correcta
 
 function Portfolio() {
   const [portfolio, setPortfolio] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // State for current sort order: default to newest first (createdAt:desc is usually better than id:desc for dates)
-  const [sortOrder, setSortOrder] = useState("createdAt:desc"); // Cambiado a 'createdAt:desc' para un ordenamiento más lógico
-  const strapiBaseUrl =
-    import.meta.env.VITE_STRAPI_API_URL ||
-    "https://portfolio-20-production-96a6.up.railway.app";
+  const [sortOrder, setSortOrder] = useState("createdAt:desc"); // Default: más recientes primero
 
-  console.log("Strapi Base URL:", strapiBaseUrl); // Console log para verificar la URL base
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Pasamos el objeto de opciones para el ordenamiento a la función de la API
-      const data = await getPortfolios({ sort: sortOrder });
-      setPortfolio(data);
-    } catch (err) {
-      console.error("Error fetching portfolio:", err);
-      setError("Error al cargar los proyectos. Por favor, inténtalo de nuevo.");
-    } finally {
-      setLoading(false);
-    }
-  }, [sortOrder]); // Re-ejecuta fetchData solo si sortOrder cambia
-
+  // Un solo useEffect para manejar la obtención de datos y sus dependencias
   useEffect(() => {
-    fetchData(); // Obtención inicial de datos cuando el componente se monta o si fetchData cambia
-  }, [fetchData]); // Dependencia en fetchData (que a su vez depende de sortOrder)
+    let isMounted = true; // Flag para evitar actualizaciones de estado en componentes desmontados
+
+    const fetchData = async () => {
+      setLoading(true); // Iniciar carga
+      setError(null); // Limpiar errores anteriores
+      try {
+        // Pasamos el objeto de opciones para el ordenamiento a la función de la API
+        const data = await getPortfolios({ sort: sortOrder });
+        if (isMounted) {
+          setPortfolio(data);
+          console.log("Datos de portfolios recibidos y procesados para Portfolio Page:", data);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Error fetching portfolio:", err);
+          setError("Error al cargar los proyectos. Por favor, inténtalo de nuevo.");
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false); // Finalizar carga
+        }
+      }
+    };
+
+    fetchData(); // Llamar a la función de obtención de datos
+
+    // Función de limpieza para desmontaje del componente
+    return () => {
+      isMounted = false;
+    };
+  }, [sortOrder]); // <-- Dependencia clave: re-ejecutar cuando sortOrder cambia
 
   const handleSortChange = (event) => {
-    setSortOrder(event.target.value); // Actualiza el estado de sortOrder, lo que dispara fetchData a través de useEffect
+    setSortOrder(event.target.value); // Actualiza el estado de sortOrder, lo que dispara el useEffect
   };
 
   return (
@@ -57,7 +67,6 @@ function Portfolio() {
             value={sortOrder}
             onChange={handleSortChange}
           >
-            {/* Opciones de ordenamiento: 'createdAt' es más preciso para "más recientes" */}
             <option value="createdAt:desc">Más Recientes</option>
             <option value="createdAt:asc">Más Antiguos</option>
             <option value="Title:asc">Título (A-Z)</option>
@@ -67,7 +76,6 @@ function Portfolio() {
 
         {loading && (
           <div className="text-center py-8">
-            {/* Puedes usar un spinner de DaisyUI o Tailwind CSS */}
             <span className="loading loading-spinner loading-lg text-gray-500"></span>
             <p className="text-gray-600 mt-2">Cargando proyectos...</p>
           </div>
@@ -86,45 +94,43 @@ function Portfolio() {
         )}
 
         {!loading && !error && portfolio.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
             {portfolio.map((item) => (
-              <div
+              <Link
+                to={`/portfolio/${item.slug}`}
                 key={item.id}
-                className="bg-white p-4 w-80 rounded-xl shadow hover:shadow-lg transition transform hover:scale-105 duration-200 ease-in-out"
+                className="bg-white rounded-xl shadow hover:shadow-lg transition transform hover:scale-105 duration-200 ease-in-out w-full max-w-xs flex flex-col overflow-hidden"
               >
-                <Link to={`/portfolio/${item.slug}`} className="block">
-                  {item.coverImage && item.coverImage[0] && (
-                    // Lógica para construir la URL de la imagen
-                    <img
-                      src={
-                        item.coverImage[0].url.startsWith("http") ||
-                        item.coverImage[0].url.startsWith("https")
-                          ? item.coverImage[0].url // Si ya es una URL completa (de Cloudinary)
-                          : `${strapiBaseUrl}${item.coverImage[0].url}` // Si es una URL relativa (de Strapi local)
-                      }
-                      alt={`Portada de ${item.Title}`}
-                      className="w-full h-44 object-cover rounded mb-3"
-                    />
-                  )}
-                  <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                    {item.Title}
+                {item.coverImage && item.coverImage.url ? (
+                  <img
+                    src={item.coverImage.url}
+                    alt={item.coverImage.alternativeText || item.Title || "Imagen de Portfolio"}
+                    className="w-full h-44 object-cover rounded-t-xl mb-3"
+                  />
+                ) : (
+                  <div className="w-full h-44 bg-gray-200 flex items-center justify-center text-gray-500 text-sm rounded-t-xl mb-3">
+                    No hay imagen disponible
+                  </div>
+                )}
+                <div className="p-4 flex-grow flex flex-col">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-2 truncate">
+                    {item.Title || "Título Desconocido"}
                   </h2>
-                  {item.description?.[0]?.children?.[0]?.text && (
-                    <p className="text-gray-500 text-sm mb-2">
-                      {/* Mostrar una descripción corta, asegúrate de manejar rich text si es necesario */}
-                      {item.description[0].children[0].text.substring(0, 70)}...
+                  {item.description && Array.isArray(item.description) && item.description[0]?.children?.[0]?.text && (
+                    <p className="text-gray-500 text-sm mb-2 flex-grow line-clamp-3">
+                      {item.description[0].children[0].text}
                     </p>
                   )}
-                  <p className="text-gray-400 text-xs mt-3">
-                    Publicado por: Tomas Millan Lanhozo
+                  <p className="text-gray-400 text-xs mt-auto">
+                    Publicado por: {item.publishedBy || "Tomas Millan Lanhozo"}
                   </p>
-                  {item.publicado && (
+                  {item.createdAt && (
                     <p className="text-gray-400 text-xs">
-                      Fecha: {item.publicado}
+                      Fecha: {new Date(item.createdAt).toLocaleDateString()}
                     </p>
                   )}
-                </Link>
-              </div>
+                </div>
+              </Link>
             ))}
           </div>
         )}
