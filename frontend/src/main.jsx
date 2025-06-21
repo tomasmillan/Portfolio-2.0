@@ -6,7 +6,7 @@ import "./index.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // Import your components for routing
 import Home from "./pages/Home.jsx";
-import Blog from "./pages/Blog.jsx";
+// import Blog from "./pages/Blog.jsx";
 // import Podcast from "./pages/Podcast.jsx";
 import Portfolio from "./pages/Portfolio.jsx";
 // import PostDetail from "./components/PostDetail.jsx";  Assuming you have these
