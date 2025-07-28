@@ -11,6 +11,16 @@ const API_URL =
  * @param {object} item - The raw or partially flattened Strapi item object.
  * @returns {object|null} The fully flattened item or null if invalid.
  */
+
+export const getStrapiMedia = (url) => {
+  if (!url) return null;
+  // Si la URL ya es absoluta, la devuelve tal cual
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // Si es relativa, la concatena con la API_URL
+  return `${API_URL}${url}`;
+};
 const flattenStrapiItem = (item) => {
 
   if (!item || typeof item.id === "undefined") {
@@ -110,7 +120,21 @@ const getEntries = async (endpoint, options = {}) => {
             }
         }
     }
-
+if (options.populate && typeof options.populate === 'object') {
+        const populateParams = new URLSearchParams();
+        for (const key in options.populate) {
+            if (options.populate.hasOwnProperty(key)) {
+                // Simple case: populate: { gallery: true } -> populate[gallery]=true
+                // Nested case: populate: { gallery: { fields: ['url'] }} -> populate[gallery][fields][0]=url
+                // Esto requiere una función auxiliar para construir queries complejos,
+                // pero para lo básico, si es un objeto simple, funciona.
+                populateParams.append(`populate[${key}]`, JSON.stringify(options.populate[key]));
+            }
+        }
+        // Esto sobrescribiría el populate=* si ya existe.
+        // Para combinar, tendrías que ser más cuidadoso o solo usar populate específico.
+        queryString = `${populateParams.toString()}`; // Reemplaza si es más específico
+    }
     const url = `${API_URL}/api/${endpoint}?${queryString}`;
     const response = await axios.get(url);
 
